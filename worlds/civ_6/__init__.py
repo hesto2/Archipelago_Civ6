@@ -1,4 +1,8 @@
+import os
 import typing
+
+import Utils
+from worlds.civ_6.Container import CivVIContainer
 from .Items import item_table, CivVIItem
 from .Locations import location_table
 from .Options import CivVIOptions
@@ -29,7 +33,8 @@ class CivVIWorld(World):
 
     web = CivVIWeb()
 
-    item_name_to_id = {value.name: value.code for _name, value in item_table.items()}
+    item_name_to_id = {value.name: value.code for _name,
+                       value in item_table.items()}
     location_name_to_id = location_table
 
     data_version = 9
@@ -43,7 +48,7 @@ class CivVIWorld(World):
         create_regions(self.multiworld, self.options, self.player)
 
     def set_rules(self):
-      set_rules(self.multiworld, self.player, location_table.keys())
+        set_rules(self.multiworld, self.player, location_table.keys())
 
     def create_item(self, name: str) -> Item:
         item = item_table[name]
@@ -60,21 +65,10 @@ class CivVIWorld(World):
         }
 
     def generate_output(self, output_directory: str):
-        data = {
-            "slot_data": self.fill_slot_data(),
-            "location_to_item": {self.location_name_to_id[i.name]: item_table[i.item.name] for i in self.multiworld.get_locations()},
-            "data_package": {
-                "data": {
-                    "games": {
-                        self.game: {
-                            "item_name_to_id": self.item_name_to_id,
-                            "location_name_to_id": self.location_name_to_id
-                        }
-                    }
-                }
-            }
-        }
-        # filename = f"{self.multiworld.get_out_file_name_base(
-        #     self.player)}.apciv6"
-        # with open(os.path.join(output_directory, filename), 'w') as f:
-        #     json.dump(data, f)
+        mod_name = f"AP-{self.multiworld.seed_name}-P{self.player}-" \
+             f"{self.multiworld.get_file_safe_player_name(self.player)}"
+        mod_dir = os.path.join(
+            output_directory, mod_name + "_" + Utils.__version__)
+        mod = CivVIContainer(mod_dir, output_directory, self.player,
+                             self.multiworld.get_file_safe_player_name(self.player))
+        mod.write()
