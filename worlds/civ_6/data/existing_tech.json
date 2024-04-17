@@ -1,0 +1,15 @@
+[
+  { "Type": "TECH_POTTERY", "UITreeRow": -3, "Cost": 24 },
+  { "Type": "TECH_ANIMAL_HUSBANDRY", "UITreeRow": -3, "Cost": 25 },
+  { "Type": "TECH_MINING", "UITreeRow": -3, "Cost": 26 },
+
+  { "Type": "TECH_SAILING", "UITreeRow": -3, "Cost": 47 },
+  { "Type": "TECH_ASTROLOGY", "UITreeRow": -3, "Cost": 48 },
+  { "Type": "TECH_IRRIGATION", "UITreeRow": -3, "Cost": 49 },
+  { "Type": "TECH_WRITING", "UITreeRow": -3, "Cost": 50 },
+  { "Type": "TECH_ARCHERY", "UITreeRow": -3, "Cost": 51 },
+
+  { "Type": "TECH_MASONRY", "UITreeRow": -3, "Cost": 79 },
+  { "Type": "TECH_BRONZE_WORKING", "UITreeRow": -3, "Cost": 80 },
+  { "Type": "TECH_WHEEL", "UITreeRow": -3, "Cost": 81 }
+]
