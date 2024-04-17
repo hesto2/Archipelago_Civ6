@@ -4,15 +4,14 @@ from enum import Enum
 from BaseClasses import MultiWorld, Region, Entrance
 from worlds.civ_6.Locations import CivVILocation
 from .Options import CivVIOptions
-from .Locations import location_table
 
-def create_regions(world: MultiWorld, options: CivVIOptions, player: int):
-  menu = Region("Menu", player, world, "Menu")
-  world.regions.append(menu)
+def create_regions(world, options: CivVIOptions, player: int):
+  menu = Region("Menu", player, world.multiworld, "Menu")
+  world.multiworld.regions.append(menu)
 
-  main_region = Region("Main", player, world )
-  main_region.add_locations(location_table, CivVILocation)
+  main_region = Region("Main", player, world.multiworld )
+  main_region.add_locations(world.location_table, CivVILocation)
 
-  world.regions.append(main_region)
+  world.multiworld.regions.append(main_region)
 
   menu.connect(main_region)

@@ -7,16 +7,16 @@ from worlds.generic.Rules import add_rule
 
 def set_rules(multiworld: MultiWorld, player, locations):
     access_rules = {
-        "AP1": lambda _state: True,
-        "AP2": lambda _state: True,
-        "AP3": lambda _state: True,
-        "AP4": lambda _state: True,
-        "AP5": lambda _state: True,
-        "AP6": lambda _state: True,
-        "AP7": lambda _state: True,
-        "AP8": lambda _state: True,
-        "AP9": lambda _state: True,
-        "AP10": lambda _state: True,
+        "TECH_1": lambda _state: True,
+        "TECH_2": lambda _state: True,
+        "TECH_3": lambda _state: True,
+        "TECH_4": lambda _state: True,
+        "TECH_5": lambda _state: True,
+        "TECH_6": lambda _state: True,
+        "TECH_7": lambda _state: True,
+        "TECH_8": lambda _state: True,
+        "TECH_9": lambda _state: True,
+        "TECH_10": lambda _state: True,
     }
     for i in locations:
         location = multiworld.get_location(i, player)

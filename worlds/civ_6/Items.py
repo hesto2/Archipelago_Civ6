@@ -1,3 +1,5 @@
+import json
+import os
 from typing import Dict
 from BaseClasses import Item, ItemClassification
 CIV_VI_AP_ITEM_ID_BASE = 5041000
@@ -23,19 +25,35 @@ class ItemData:
         self.name = name
         self.code = civ_vi_id + CIV_VI_AP_ITEM_ID_BASE
 
+def generate_item_table():
+    """
+    Uses the data from existing_tech.json to generate a location table in the following format:
+    {
+      "ERA_ANCIENT": {
+        "TECH_POTTERY": ItemData,
+        "TECH_ANIMAL_HUSBANDRY": ItemData
+      },
+      ...
+    }
+    """
+    # Generate Techs
+    current_file_path = os.path.abspath(__file__)
+    current_directory = os.path.dirname(current_file_path)
+    existing_tech_path = os.path.join(
+        current_directory, 'data', 'existing_tech.json')
 
-ancient_era_item_table: Dict[str, ItemData] = {
-  "Pottery": ItemData("Pottery", 0),
-  "Animal Husbandry": ItemData("Animal Husbandry", 1),
-  "Mining": ItemData("Mining", 2),
-  "Sailing": ItemData("Sailing", 3, ItemClassification.progression),
-  "Astrology": ItemData("Astrology", 4, ItemClassification.progression),
-  "Irrigation": ItemData("Irrigation", 5),
-  "Archery": ItemData("Archery", 6),
-  "Writing": ItemData("Writing", 7, ItemClassification.progression),
-  "Masonry": ItemData("Masonry", 8),
-  "Bronze Working": ItemData("Bronze Working", 9, ItemClassification.progression),
-  "Wheel": ItemData("Wheel", 10),
-}
+    with open(existing_tech_path) as f:
+        existing_data = json.load(f)
+    era_techs = {}
 
-item_table: Dict[str, ItemData] = {**ancient_era_item_table}
+    i = 0
+    for data in existing_data:
+        era_type = data['EraType']
+        if era_type not in era_techs:
+            era_techs[era_type] = {}
+        era_techs[era_type][data["Type"]] = ItemData(data["Type"], i)
+        i += 1
+
+    item_table = era_techs
+
+    return item_table
