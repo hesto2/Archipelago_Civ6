@@ -13,17 +13,19 @@ class CivVIItem(Item):
         super().__init__(name, classification, civ_vi_id + CIV_VI_AP_ITEM_ID_BASE, player)
 
 
-class ItemData:
+class CivVIItemData:
     civ_vi_id: int
     classification: ItemClassification
     name: str
     code: int
+    cost: int
 
-    def __init__(self, name, civ_vi_id: int, classification: ItemClassification = ItemClassification.useful):
+    def __init__(self, name, civ_vi_id: int, cost: int, classification: ItemClassification = ItemClassification.useful):
         self.classification = classification
         self.civ_vi_id = civ_vi_id
         self.name = name
         self.code = civ_vi_id + CIV_VI_AP_ITEM_ID_BASE
+        self.cost = cost
 
 def generate_item_table():
     """
@@ -51,7 +53,7 @@ def generate_item_table():
         era_type = data['EraType']
         if era_type not in era_techs:
             era_techs[era_type] = {}
-        era_techs[era_type][data["Type"]] = ItemData(data["Type"], i)
+        era_techs[era_type][data["Type"]] = CivVIItemData(data["Type"], i, data["Cost"])
         i += 1
 
     item_table = era_techs

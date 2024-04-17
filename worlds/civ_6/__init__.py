@@ -92,7 +92,7 @@ class CivVIWorld(World):
             f"{mod_name}/Changes.modinfo": generate_modinfo(self.multiworld),
             f"{mod_name}/NewTechnologies.xml": generate_new_technologies(self),
             f"{mod_name}/NewTechPrereqs.xml": generate_tech_prereqs(self),
-            f"{mod_name}/UpdateTechs.sql": generate_update_techs(),
+            f"{mod_name}/UpdateTechs.sql": generate_update_techs(self.location_table.values(), self.item_table.values())
         }
         mod = CivVIContainer(mod_files, mod_dir, output_directory, self.player,
                              self.multiworld.get_file_safe_player_name(self.player))

@@ -1,16 +1,27 @@
+from dataclasses import dataclass
 import os
-from typing import List
+from typing import Dict, List, NamedTuple
 import zipfile
 from BaseClasses import Location, MultiWorld
 from worlds.Files import APContainer
 import json
 import uuid
 
+from worlds.civ_6.Items import CivVIItemData
+from worlds.civ_6.Locations import CivVILocationData
+
 
 # Python fstrings don't allow backslashes, so we use this workaround
 nl = "\n"
 tab = "\t"
 apo = "\'"
+
+
+@dataclass
+class CivTreeItem:
+    name: str
+    cost: int
+    ui_tree_row: int
 
 
 class CivVIContainer(APContainer):
@@ -61,6 +72,7 @@ def generate_modinfo(multiworld: MultiWorld) -> str:
 </Mod>
         """
 
+
 def generate_new_technologies(world) -> str:
     locations = world.multiworld.get_filled_locations(world.player)
 # fmt: off
@@ -102,20 +114,55 @@ def generate_tech_prereqs(world) -> str:
   """
 # fmt: on
 
-def generate_update_techs() -> str:
-    current_file_path = os.path.abspath(__file__)
-    current_directory = os.path.dirname(current_file_path)
-    existing_tech_path = os.path.join(
-        current_directory, 'data', 'existing_tech.json')
-    with open(existing_tech_path) as f:
-        data = json.load(f)
 
-        sql_statements = ""
+def generate_update_techs(locations: List[CivVILocationData], items: List[CivVIItemData]) -> str:
+    """
+    Generates the SQL used to order the tech tree
+    """
+    location_tree_items = []
+    item_tree_items = []
+    for item in items:
+        item_tree_items.append(CivTreeItem(
+            item.name, item.cost, 0))
+        pass
+    for location in locations:
+        location_tree_items.append(CivTreeItem(
+            location.name, location.cost, 0))
+    ordered_items = []
+    ordered_items += make_tree(item_tree_items, -2, -3)
+    ordered_items += make_tree(location_tree_items, 4, -1)
 
-        # fmt: off
-        for tech in data:
-            # Generate the SQL update statements for UITreeRow and Cost
-            sql_statements += f"UPDATE Technologies{nl}SET UITreeRow= {tech['UITreeRow']}{nl}WHERE TechnologyType ='{tech['Type']}';{nl}"
-            sql_statements += f"UPDATE Technologies{nl}SET Cost = {tech['Cost']}{nl}WHERE TechnologyType ='{tech['Type']}';{nl}--{nl}"
-        # fmt: on
+    sql_statements = ""
+    # fmt: off
+    for item in ordered_items:
+        # Generate the SQL update statements for UITreeRow and Cost
+        sql_statements += f"UPDATE Technologies{nl}SET UITreeRow= {item.ui_tree_row}{nl}WHERE TechnologyType ='{item.name}';{nl}"
+        sql_statements += f"UPDATE Technologies{nl}SET Cost = {item.cost}{nl}WHERE TechnologyType ='{item.name}';{nl}--{nl}"
+    # fmt: on
     return sql_statements
+
+
+def make_tree(items: List[CivTreeItem], rowMax: int, rowMin: int) -> List[CivTreeItem]:
+    """
+    Takes a dictionary of tech_name: cost, groups items by cost and if there aren't enough available rows then it will adjust the cost in a minor way to make them adjacent
+    """
+
+    new_items: List[CivTreeItem] = []
+    # Get all items grouped by cost
+    items_by_cost: Dict[int, List[CivTreeItem]] = {}
+    for item in items:
+        if item.cost not in items_by_cost:
+            items_by_cost[item.cost] = []
+        items_by_cost[item.cost].append(item)
+
+    for cost, items in items_by_cost.items():
+        new_cost = cost
+        row = rowMin
+        for item in items:
+            new_items.append(CivTreeItem(item.name, new_cost, row))
+            row += 1
+            if row > rowMax:
+                new_cost += 1
+                row = rowMin
+
+    return new_items
