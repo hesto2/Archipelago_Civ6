@@ -97,7 +97,7 @@ def generate_new_technologies(world) -> str:
                f'EraType="{world.location_table[location.name].era_type}" '
                f'UITreeRow="{world.location_table[location.name].uiTreeRow}" '
                f'Cost="{world.location_table[location.name].cost}" '
-               f'Description="{location.name}'
+               f'Description="{location.name}" '
                f'AdvisorType="ADVISOR_GENERIC" />{nl}'
                for location in locations])}
   </Technologies>
