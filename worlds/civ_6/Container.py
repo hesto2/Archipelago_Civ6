@@ -85,7 +85,7 @@ def generate_new_technologies(world) -> str:
   <Technologies>
 {"".join([f'{tab}<Row TechnologyType="{location.name}" '
                f'Name="{world.multiworld.player_name[location.item.player]}{apo}s '
-               f'{location.item.name}" '
+               f'{location.name}" '
                f'EraType="{world.location_table[location.name].era_type}" '
                f'UITreeRow="{world.location_table[location.name].uiTreeRow}" '
                f'Cost="{world.location_table[location.name].cost}" '
@@ -98,21 +98,27 @@ def generate_new_technologies(world) -> str:
 
 
 def generate_tech_prereqs(world) -> str:
-    locations = world.multiworld.get_filled_locations(world.player)
-# fmt: off
+    locations = world.location_table.values()
+    pre_req_rows = [generate_prereq_row(location)
+                    for location in locations
+                    if len(location.pre_reqs) > 0]
+
     return f"""<?xml version="1.0" encoding="utf-8"?>
   <GameData>
     <TechnologyPrereqs>
-      <!--ERA_ANCIENT-->
-{"".join([f'{tab}<Row Technology="TECH_AP{world.location_table[location.name].civ_id}" '
-          f'PrereqTech="TECH_AP'
-          f'{world.location_table[location.name].civ_id - 1}" />{nl}'
-          for location in locations
-          if world.location_table[location.name].civ_id != 0 and world.location_table[location.name].civ_id != 5])}
+      {"".join(pre_req_rows)}
     </TechnologyPrereqs>
   </GameData>
   """
-# fmt: on
+
+
+def generate_prereq_row(location: CivVILocationData) -> str:
+    pre_reqs = ""
+    for pre_req in location.pre_reqs:
+    # fmt: off
+        pre_reqs += f'<Row Technology="{location.name}" PrereqTech="{pre_req}" />{nl}'
+    # fmt: on
+    return pre_reqs
 
 
 def generate_update_techs(locations: List[CivVILocationData], items: List[CivVIItemData]) -> str:
@@ -131,7 +137,6 @@ def generate_update_techs(locations: List[CivVILocationData], items: List[CivVII
     ordered_items = []
     ordered_items += make_tree(item_tree_items, -2, -3)
     ordered_items += make_tree(location_tree_items, 4, 0)
-
 
     sql_statements = ""
     # fmt: off

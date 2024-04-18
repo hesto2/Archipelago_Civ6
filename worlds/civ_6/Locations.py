@@ -21,23 +21,30 @@ class EraType(Enum):
 
 class CivVILocationData():
     game: str = "Civilization VI"
+    name: str
     cost: int
     uiTreeRow: int
     civ_id: int
     code: int
     era_type: EraType
+    pre_reqs: List[str]
 
-    def __init__(self, name: str, cost: int, uiTreeRow: int, id: int, era_type: EraType):
+    def __init__(self, name: str, cost: int, uiTreeRow: int, id: int, era_type: EraType, pre_reqs: Optional[List[str]] = None):
         self.name = name
         self.cost = cost
         self.uiTreeRow = uiTreeRow
         self.civ_id = id
         self.code = id + CIV_VI_AP_LOCATION_ID_BASE
         self.era_type = era_type
+        self.pre_reqs = pre_reqs
 
 
 class CivVILocation(Location):
     game: str = "Civilization VI"
+
+
+def format_tech_name(id: int) -> str:
+    return f'TECH_AP{id}'
 
 
 def generate_location_table():
@@ -51,7 +58,14 @@ def generate_location_table():
       ...
     }
     """
-    # Generate Techs
+    current_file_path = os.path.abspath(__file__)
+    current_directory = os.path.dirname(current_file_path)
+    existing_prereq_path = os.path.join(
+        current_directory, 'data', 'existing_prereqs.json')
+
+    with open(existing_prereq_path) as f:
+        existing_prereqs = json.load(f)
+
     current_file_path = os.path.abspath(__file__)
     current_directory = os.path.dirname(current_file_path)
     existing_tech_path = os.path.join(
@@ -59,6 +73,7 @@ def generate_location_table():
 
     with open(existing_tech_path) as f:
         existing_data = json.load(f)
+
     era_techs = {}
 
     i = 0
@@ -66,11 +81,23 @@ def generate_location_table():
         era_type = data['EraType']
         if era_type not in era_techs:
             era_techs[era_type] = {}
-        ap_name = f'TECH_AP{i}'
+        ap_name = format_tech_name(i)
+        pre_reqs = []
+
+        if era_type == EraType.ERA_FUTURE.value:
+          # No exising prereqs for future techs, they have different logic
+          pre_reqs = [format_tech_name(i - 1)]
+        else:
+          # Identify the index of the tech from vanilla
+          j = 0
+          for prereq in existing_prereqs:
+              if prereq['Technology'] == data["Type"]:
+                  pre_reqs.append(format_tech_name(j))
+                  break
+              j += 1
+
         era_techs[era_type][ap_name] = CivVILocationData(
-            ap_name, data['Cost'], data['UITreeRow'], i, era_type)
+            ap_name, data['Cost'], data['UITreeRow'], i, era_type, pre_reqs)
         i += 1
 
-    location_table = era_techs
-
-    return location_table
+    return era_techs
