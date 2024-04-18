@@ -60,11 +60,10 @@ def generate_location_table():
     """
     current_file_path = os.path.abspath(__file__)
     current_directory = os.path.dirname(current_file_path)
-    existing_prereq_path = os.path.join(
-        current_directory, 'data', 'existing_prereqs.json')
-
-    with open(existing_prereq_path) as f:
-        existing_prereqs = json.load(f)
+    new_prereq_path = os.path.join(
+        current_directory, 'data', 'new_prereqs.json')
+    with open(new_prereq_path) as f:
+        new_prereqs = json.load(f)
 
     current_file_path = os.path.abspath(__file__)
     current_directory = os.path.dirname(current_file_path)
@@ -82,22 +81,11 @@ def generate_location_table():
         if era_type not in era_techs:
             era_techs[era_type] = {}
         ap_name = format_tech_name(i)
-        pre_reqs = []
 
-        if era_type == EraType.ERA_FUTURE.value:
-          # No exising prereqs for future techs, they have different logic
-          pre_reqs = [format_tech_name(i - 1)]
-        else:
-          # Identify the index of the tech from vanilla
-          j = 0
-          for prereq in existing_prereqs:
-              if prereq['Technology'] == data["Type"]:
-                  pre_reqs.append(format_tech_name(j))
-                  break
-              j += 1
+        display_data = next((item for item in new_prereqs if item["Technology"] == ap_name), None)
 
         era_techs[era_type][ap_name] = CivVILocationData(
-            ap_name, data['Cost'], data['UITreeRow'], i, era_type, pre_reqs)
+            ap_name, data['Cost'], display_data['UITreeRow'], i, era_type, display_data["PrereqTech"])
         i += 1
 
     return era_techs

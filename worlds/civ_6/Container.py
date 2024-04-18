@@ -133,10 +133,11 @@ def generate_update_techs(locations: List[CivVILocationData], items: List[CivVII
         pass
     for location in locations:
         location_tree_items.append(CivTreeItem(
-            location.name, location.cost, 0))
+            location.name, location.cost, location.uiTreeRow))
+
     ordered_items = []
     ordered_items += make_tree(item_tree_items, -2, -3)
-    ordered_items += make_tree(location_tree_items, 4, 0)
+    ordered_items += location_tree_items
 
     sql_statements = ""
     # fmt: off
