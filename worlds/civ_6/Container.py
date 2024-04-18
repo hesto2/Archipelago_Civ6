@@ -25,6 +25,9 @@ class CivTreeItem:
 
 
 class CivVIContainer(APContainer):
+    """
+    Responsible for generating the mod files for the Civ VI multiworld
+    """
     game: str = "Civilization VI"
 
     def __init__(self, patch_data: dict, base_path: str, output_directory: str,
@@ -74,21 +77,27 @@ def generate_modinfo(multiworld: MultiWorld) -> str:
 
 
 def generate_new_technologies(world) -> str:
+    """
+    Generates the XML for the new techs as well as the tech blocker used to prevent humans from researching their own techs
+    """
     locations = world.multiworld.get_filled_locations(world.player)
 # fmt: off
     return f"""<?xml version="1.0" encoding="utf-8"?>
 <GameInfo>
   <Types>
+    <Row Type="TECH_BLOCKER" Kind="KIND_TECH" />
   {"".join([f'{tab}<Row Type="{location.name}" Kind="KIND_TECH" />{nl}' for
            location in locations])}
   </Types>
   <Technologies>
+      <Row TechnologyType="TECH_BLOCKER" Name="TECH_BLOCKER" EraType="ERA_FUTURE" UITreeRow="0" Cost="9999" AdvisorType="ADVISOR_GENERIC" Description="Archipelago Tech created to prevent players from researching their own tech"/>
 {"".join([f'{tab}<Row TechnologyType="{location.name}" '
                f'Name="{world.multiworld.player_name[location.item.player]}{apo}s '
-               f'{location.name}" '
+               f'{location.item.name}" '
                f'EraType="{world.location_table[location.name].era_type}" '
                f'UITreeRow="{world.location_table[location.name].uiTreeRow}" '
                f'Cost="{world.location_table[location.name].cost}" '
+               f'Description="{location.name}'
                f'AdvisorType="ADVISOR_GENERIC" />{nl}'
                for location in locations])}
   </Technologies>
@@ -99,9 +108,12 @@ def generate_new_technologies(world) -> str:
 
 def generate_tech_prereqs(world) -> str:
     locations = world.location_table.values()
+    items = world.item_table.values()
     pre_req_rows = [generate_prereq_row(location)
                     for location in locations
                     if len(location.pre_reqs) > 0]
+    pre_req_rows += [generate_prereq_row(item, "TECH_BLOCKER")
+                     for item in items]
 
     return f"""<?xml version="1.0" encoding="utf-8"?>
   <GameData>
@@ -112,7 +124,9 @@ def generate_tech_prereqs(world) -> str:
   """
 
 
-def generate_prereq_row(location: CivVILocationData) -> str:
+def generate_prereq_row(location: CivVILocationData, forced_prereq: str = None) -> str:
+    if forced_prereq:
+        return f'<Row Technology="{location.name}" PrereqTech="{forced_prereq}" />{nl}'
     pre_reqs = ""
     for pre_req in location.pre_reqs:
     # fmt: off
