@@ -103,7 +103,6 @@ end
 --	Populate the list of research options.
 -- ===========================================================================
 function View( playerID:number, kData:table )
-  print("HI theresr")
 	m_researchIM:ResetInstances();
 
 	local kActive : table = GetActiveData(kData);
@@ -182,7 +181,6 @@ end
 --
 -- ===========================================================================
 function AddAvailableResearch( playerID:number, kData:table )
-
 	if playerID == -1 then return; end	-- Autoplay
 
 	local isDisabled:boolean = CanPlayerResearchAnything( playerID );
@@ -226,7 +224,7 @@ function AddAvailableResearch( playerID:number, kData:table )
 		kItemInstance.NodeNumber:SetHide(true);
 	end
 
-    kItemInstance.Top:RegisterCallback( Mouse.eMouseEnter,	function() UI.PlaySound("Main_Menu_Mouse_Over"); end);
+  kItemInstance.Top:RegisterCallback( Mouse.eMouseEnter,	function() UI.PlaySound("Main_Menu_Mouse_Over"); end);
 
 	-- Set up callback that changes the current research
 	kItemInstance.Top:RegisterCallback(		Mouse.eLClick,

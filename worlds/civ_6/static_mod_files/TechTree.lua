@@ -188,6 +188,14 @@ local m_kScrambledRowLookup	:table  = {-1,-3,2,4,0,1,-2,3};		-- To help scramble
 --	FUNCTIONS
 -- ===========================================================================
 
+function IsAPTech(name)
+  local start = "TECH_AP"
+  if name:sub(1, #start) == start and name ~= "TECH_APPRENTICESHIP" then
+    return true
+  end
+  return false
+end
+
 -- ===========================================================================
 --	Accessor (for MODs) so current data doesn't need to be made global.
 -- ===========================================================================
@@ -536,55 +544,53 @@ function AllocateUI( kNodeGrid:table, kPaths:table )
 	-- Actually build UI nodes
 	for _,item in pairs(g_kItemDefaults) do
 
-		local tech:table		= GameInfo.Technologies[item.Type];
-		local techType:string	= tech and tech.TechnologyType;
+    if IsAPTech(item.Type) then
+      local tech:table		= GameInfo.Technologies[item.Type];
+      local techType:string	= tech and tech.TechnologyType;
 
-		local unlockableTypes	= GetUnlockablesForTech_Cached(techType, playerId, playerUnlockables);
-		local node				:table;
-		local numUnlocks		:number = 0;
+      local unlockableTypes	= GetUnlockablesForTech_Cached(techType, playerId, playerUnlockables);
+      local node				:table;
+      local numUnlocks		:number = 0;
 
-		if unlockableTypes ~= nil then
-			for _, unlockItem in ipairs(unlockableTypes) do
-				local typeInfo = GameInfo.Types[unlockItem[1]];
-				numUnlocks = numUnlocks + 1;
-			end
-		end
+      if unlockableTypes ~= nil then
+        for _, unlockItem in ipairs(unlockableTypes) do
+          local typeInfo = GameInfo.Types[unlockItem[1]];
+          numUnlocks = numUnlocks + 1;
+        end
+      end
 
-		node = m_kNodeIM:GetInstance();
-		node.Top:SetTag( item.Hash );	-- Set the hash of the technology to the tag of the node (for tutorial to be able to callout)
+      node = m_kNodeIM:GetInstance();
+      node.Top:SetTag( item.Hash );	-- Set the hash of the technology to the tag of the node (for tutorial to be able to callout)
 
-		local era:table = g_kEras[item.EraType];
+      local era:table = g_kEras[item.EraType];
 
-		-- Horizontal # = All prior nodes across all previous eras + node position in current era (based on cost vs. other nodes in that era)
-		local horizontal, vertical = ColumnRowToPixelXY(era.PriorColumns + item.Column, item.UITreeRow );
+      -- Horizontal # = All prior nodes across all previous eras + node position in current era (based on cost vs. other nodes in that era)
+      local horizontal, vertical = ColumnRowToPixelXY(era.PriorColumns + item.Column, item.UITreeRow );
 
-		-- Add data fields to UI component
-		node.Type	= techType;						-- Dynamically add "Type" field to UI node for quick look ups in item data table.
-		node.x		= horizontal;					-- Granted x,y can be looked up via GetOffset() but caching the values here for
-		node.y		= vertical - VERTICAL_CENTER;	-- other LUA functions to use removes the necessity of a slow C++ roundtrip.
+      -- Add data fields to UI component
+      node.Type	= techType;						-- Dynamically add "Type" field to UI node for quick look ups in item data table.
+      node.x		= horizontal;					-- Granted x,y can be looked up via GetOffset() but caching the values here for
+      node.y		= vertical - VERTICAL_CENTER;	-- other LUA functions to use removes the necessity of a slow C++ roundtrip.
 
-		if node["unlockIM"] ~= nil then
-			node["unlockIM"]:DestroyInstances()
-		end
-		node["unlockIM"] = InstanceManager:new( "UnlockInstance", "UnlockIcon", node.UnlockStack );
+      if node["unlockIM"] ~= nil then
+        node["unlockIM"]:DestroyInstances()
+      end
+      node["unlockIM"] = InstanceManager:new( "UnlockInstance", "UnlockIcon", node.UnlockStack );
 
-		if node["unlockGOV"] ~= nil then
-			node["unlockGOV"]:DestroyInstances()
-		end
-		node["unlockGOV"] = InstanceManager:new( "GovernmentIcon", "GovernmentInstanceGrid", node.UnlockStack );
+      if node["unlockGOV"] ~= nil then
+        node["unlockGOV"]:DestroyInstances()
+      end
+      node["unlockGOV"] = InstanceManager:new( "GovernmentIcon", "GovernmentInstanceGrid", node.UnlockStack );
 
-		PopulateUnlockablesForTech(playerId, tech.Index, node["unlockIM"], function() SetCurrentNode(item.Hash); end);
+      PopulateUnlockablesForTech(playerId, tech.Index, node["unlockIM"], function() SetCurrentNode(item.Hash); end);
 
-		node.NodeButton:RegisterCallback( Mouse.eLClick, function() SetCurrentNode(item.Hash); end);
-		node.OtherStates:RegisterCallback( Mouse.eLClick, function() SetCurrentNode(item.Hash); end);
+      node.NodeButton:RegisterCallback( Mouse.eLClick, function() SetCurrentNode(item.Hash); end);
+      node.OtherStates:RegisterCallback( Mouse.eLClick, function() SetCurrentNode(item.Hash); end);
 
-		-- Set position and save.
-		node.Top:SetOffsetVal( horizontal, vertical);
-  -- AP: remove non AP tech from nodes
-    -- local start = "TECH_AP"
-    -- if item.Type:sub(1, #start) == start then
+      -- Set position and save.
+      node.Top:SetOffsetVal( horizontal, vertical);
       g_uiNodes[item.Type] = node;
-    -- end
+    end
 	end
 
 	if Controls.TreeStart ~= nil then
