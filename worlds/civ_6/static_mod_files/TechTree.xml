@@ -3,13 +3,13 @@
 
 	<Container ID="Vignette" Style="FullScreenVignetteConsumer"/>
 	<AlphaAnim ID="SearchResultsTimer" Begin="0" End="1" Speed="2" Cycle="Once" Stopped="1"/>
-	
+
   <Container Anchor="C,C" Size="full,768">
     <Box Color="7,30,50,255" Anchor="L,B" Size="parent,5"/>
     <Image ID="ScrollbarBackgroundArt" Anchor="C,B" Offset="0,2" Size="parent-108,32" Texture="Controls_TimelineTile" StretchMode="Tile"/>
 		<Grid Anchor="C,B" Offset="0,-8" Size="parent,52" Texture="Controls_Timeline" SliceCorner="54,27" SliceSize="6,1" SliceTextureSize="114,52"/>
 		<Image			ID="Background" Size="parent,parent" Texture="Parchment_Pattern" StretchMode="Tile" ConsumeMouse="1"/>
-		<ScrollPanel	ID="EraArtScroller" Offset="0,-2" Size="parent,parent" Vertical="0" ScrollBar="0">			
+		<ScrollPanel	ID="EraArtScroller" Offset="0,-2" Size="parent,parent" Vertical="0" ScrollBar="0">
 			<Container	ID="ForceArtSizeX" Size="1,1"/>
     </ScrollPanel>
     <Image Anchor="L,B" Offset="0,33" Size="parent,22" Texture="Controls_GradientSmall" Color="0,0,0,150" FlipY="1"/>
@@ -125,11 +125,11 @@
       <EditBox ID="SearchEditBox" Offset="32,3" Size="parent-24,22" CallOnChar="1" EditMode="1" Style="TreeOptionText" MaxLength="24" String="LOC_TREE_SEARCH_W_DOTS"/>
     </Grid>
 
-    <GridButton ID="ToggleKeyButton" Offset="0,74" Size="194,26" TextOffset="32,6" String="LOC_TREE_SHOW_KEY" Style="TreeOptionText">
+    <GridButton ID="ToggleTreeButton" Offset="0,74" Size="194,26" TextOffset="32,6" String="Toggle Archipelago Tree" Style="TreeOptionText">
       <GridData Texture="Controls_CheckButton2" StateOffsetIncrement="0,26" SliceCorner="30,14" SliceSize="1,1" SliceTextureSize="41,26"/>
     </GridButton>
 
-    <Grid ID="KeyPanel" ConsumeAllMouse="1" Anchor="L,B" AnchorSide="I,O" Offset="0,2" Size="195,510" Texture="Controls_PanelBlue" SliceCorner="25,28" SliceSize="33,18" SliceTextureSize="83,75">
+    <!-- <Grid ID="KeyPanel" ConsumeAllMouse="1" Anchor="L,B" AnchorSide="I,O" Offset="0,2" Size="195,510" Texture="Controls_PanelBlue" SliceCorner="25,28" SliceSize="33,18" SliceTextureSize="83,75">
       <Line Start="20,16" End="174,16" Color="55,95,126,255" Width="2"/>
       <Label Anchor="C,T" Offset="0,20" Style="FontFlair16" SmallCaps="20" String="LOC_TREE_KEY" Color0="78,119,151,255" Color1="0,0,0,0" Color2="25,65,96,255"/>
       <Line Start="20,40" End="174,40" Color="55,95,126,255" Width="2"/>
@@ -169,7 +169,7 @@
       <Image  ID="UnlockKey" Texture="UnlockFrames"  Size ="38,38" Offset="10,450" TextureOffset="494,0">
         <Label ID="UnlockLabelKey" Offset="40,14" Style="TreeNodeText"  String="LOC_CIVICS_KEY_UNLOCK"/>
       </Image>
-    </Grid>
+    </Grid> -->
 
     <Container ID="SearchResultsPanelContainer" Anchor="L,T" Offset="0,75" Size="193,auto" Hidden="1">
       <ScrollPanel ID="SearchResultsPanel" Size="parent,600" Vertical="1" AutoScrollBar="1">
@@ -179,15 +179,15 @@
         </Grid>
       </ScrollPanel>
     </Container>
-    
-	</Grid>
-	
 
-	
+	</Grid>
+
+
+
 	<!-- ================================================================= -->
 	<!--	INSTANCES																												 -->
 	<!-- ================================================================= -->
-		
+
 	<!-- Most important part of the tree, the actual nodes of content. -->
 	<Include File="TechTreeNode"/>
 
@@ -201,18 +201,18 @@
 			</GridButton>
 		</Container>
 	</Instance>
-		
+
 	<!-- Icons representing the different items unlocked -->
   <Instance Name="UnlockInstance">
     <Button ID="UnlockIcon" Style="UnlockFrames" NoStateChange="1">
       <Image ID="Icon" Size="38,38" Texture="Controls_Blank" Anchor="C,C"/>
     </Button>
   </Instance>
- 
+
   <Instance Name="LineImageInstance">
     <Image ID="LineImage" Size="40,40" Texture="Controls_TreePathDashEW" Color="84,77,66,255" StretchMode="Tile"/>
   </Instance>
-  
+
 	<!-- Era banners -->
 	<Instance Name="EraLabelInstance">
 		<Container ID="Top" Offset="0,-36" Size="90,768">
@@ -238,13 +238,13 @@
       <Label ID="NodeNumber" Offset="15,15" Style="FontFlair12" String="99"/>
     </Container>
   </Instance>
-	
-	
+
+
 	<!-- Decoration on scrollbar marker area as to where Era pips should be placed. -->
 	<Instance Name="EraDotInstance">
     <Image ID="Dot" Offset="0,13" Size="6,6" Texture="Controls_TimeDiv"/>
   </Instance>
-	
+
 		<!-- Markers representing players that are placed on the timeline (player: 122,42) -->
 	<Instance Name="PlayerMarkerInstance">
 		<Container ID="Top" Size="2,2">
@@ -258,5 +258,5 @@
 			</Image>
 		</Container>
   </Instance>
-	
+
 </Context>

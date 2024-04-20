@@ -94,6 +94,20 @@ class CivVIWorld(World):
             f"{mod_name}/NewTechPrereqs.xml": generate_tech_prereqs(self),
             f"{mod_name}/UpdateTechs.sql": generate_update_techs(self.location_table.values(), self.item_table.values())
         }
+
+
+        # Add static mod files
+        current_file_path = os.path.abspath(__file__)
+        current_directory = os.path.dirname(current_file_path)
+        static_mod_files_folder = os.path.join(
+            current_directory, 'static_mod_files')
+        static_mod_files = os.listdir(static_mod_files_folder)
+
+        for file_name in static_mod_files:
+          file_path = os.path.join(static_mod_files_folder, file_name)
+          with open(file_path, 'r') as file:
+            mod_files[f"{mod_name}/{file_name}"] = file.read()
+
         mod = CivVIContainer(mod_files, mod_dir, output_directory, self.player,
                              self.multiworld.get_file_safe_player_name(self.player))
         mod.write()

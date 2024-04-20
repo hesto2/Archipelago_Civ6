@@ -46,10 +46,11 @@ class CivVIContainer(APContainer):
 def generate_modinfo(multiworld: MultiWorld) -> str:
     return f"""<?xml version="1.0" encoding="utf-8"?>
 <Mod id="{uuid.uuid4()}" version="1">
-  <Properties>
+<Properties>
     <Name>Archipelago</Name>
     <Teaser>Mod for Archipelago Multiworld</Teaser>
-    <Description>This mod disables the ability for players to research their own tech tree and instead provides Archipelago-specific techs that can be researched.</Description>
+    <Description>This mod disables the ability for players to research their own tech tree and
+      instead provides Archipelago-specific techs that can be researched.</Description>
     <Authors>Hesto2</Authors>
   </Properties>
 
@@ -58,12 +59,15 @@ def generate_modinfo(multiworld: MultiWorld) -> str:
     <File>NewTechPrereqs.xml</File>
     <File>UpdateTechs.sql</File>
     <File>Code.sql</File>
+    <File>ResearchChooser.lua</File>
+    <File>ResearchChooser.xml</File>
+    <File>TechTree.lua</File>
+    <File>TechTree.xml</File>
+    <File>TechTreeNode.xml</File>
   </Files>
   <InGameActions>
     <UpdateDatabase id="ArchipelagoTech">
       <File>NewTechnologies.xml</File>
-
-      <!-- Needs to Be over 200 to work with Real Tech Tree -->
       <Properties>
         <LoadOrder>212</LoadOrder>
       </Properties>
@@ -71,6 +75,32 @@ def generate_modinfo(multiworld: MultiWorld) -> str:
       <File>UpdateTechs.sql</File>
       <File>NewTechPrereqs.xml</File>
     </UpdateDatabase>
+    <ImportFiles id="ArchipelagoReplacers">
+      <Properties>
+        <LoadOrder>150000</LoadOrder>
+      </Properties>
+      <File>ResearchChooser.lua</File>
+      <File>ResearchChooser.xml</File>
+
+      <File>TechTree.lua</File>
+      <File>TechTree.xml</File>
+
+      <File>TechTreeNode.xml</File>
+    </ImportFiles>
+    <ReplaceUIScript id="Archipelago_ResearchChooser">
+      <Properties>
+        <LoadOrder>150000</LoadOrder>
+        <LuaContext>ResearchChooser</LuaContext>
+        <LuaReplace>ResearchChooser.lua</LuaReplace>
+      </Properties>
+    </ReplaceUIScript>
+    <ReplaceUIScript id="Archipelago_TechTree">
+      <Properties>
+        <LoadOrder>150001</LoadOrder>
+        <LuaContext>TechTree</LuaContext>
+        <LuaReplace>TechTree.lua</LuaReplace>
+      </Properties>
+    </ReplaceUIScript>
   </InGameActions>
 </Mod>
         """
