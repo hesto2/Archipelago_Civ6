@@ -2,7 +2,7 @@ import os
 from typing import Dict
 
 import Utils
-from worlds.civ_6.Container import CivVIContainer, generate_modinfo, generate_new_technologies, generate_tech_prereqs, generate_update_techs
+from worlds.civ_6.Container import CivVIContainer, generate_modinfo, generate_new_technologies
 from .Items import generate_item_table, CivVIItem
 from .Locations import CivVILocationData, EraType, generate_location_table
 from .Options import CivVIOptions
@@ -91,8 +91,6 @@ class CivVIWorld(World):
         mod_files = {
             f"{mod_name}/Changes.modinfo": generate_modinfo(self.multiworld),
             f"{mod_name}/NewTechnologies.xml": generate_new_technologies(self),
-            f"{mod_name}/NewTechPrereqs.xml": generate_tech_prereqs(self),
-            f"{mod_name}/UpdateTechs.sql": generate_update_techs(self.location_table.values(), self.item_table.values())
         }
 
 

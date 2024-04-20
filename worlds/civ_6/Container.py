@@ -57,8 +57,6 @@ def generate_modinfo(multiworld: MultiWorld) -> str:
   <Files>
     <File>NewTechnologies.xml</File>
     <File>NewTechPrereqs.xml</File>
-    <File>UpdateTechs.sql</File>
-    <File>Code.sql</File>
     <File>ResearchChooser.lua</File>
     <File>ResearchChooser.xml</File>
     <File>TechTree.lua</File>
@@ -72,7 +70,6 @@ def generate_modinfo(multiworld: MultiWorld) -> str:
         <LoadOrder>212</LoadOrder>
       </Properties>
 
-      <File>UpdateTechs.sql</File>
       <File>NewTechPrereqs.xml</File>
     </UpdateDatabase>
     <ImportFiles id="ArchipelagoReplacers">
@@ -134,86 +131,3 @@ def generate_new_technologies(world) -> str:
 </GameInfo>
     """
 # fmt: on
-
-
-def generate_tech_prereqs(world) -> str:
-    locations = world.location_table.values()
-    items = world.item_table.values()
-    pre_req_rows = [generate_prereq_row(location)
-                    for location in locations
-                    if len(location.pre_reqs) > 0]
-    pre_req_rows += [generate_prereq_row(item, "TECH_BLOCKER")
-                     for item in items]
-
-    return f"""<?xml version="1.0" encoding="utf-8"?>
-  <GameData>
-    <TechnologyPrereqs>
-      {"".join(pre_req_rows)}
-    </TechnologyPrereqs>
-  </GameData>
-  """
-
-
-def generate_prereq_row(location: CivVILocationData, forced_prereq: str = None) -> str:
-    if forced_prereq:
-        return f'<Row Technology="{location.name}" PrereqTech="{forced_prereq}" />{nl}'
-    pre_reqs = ""
-    for pre_req in location.pre_reqs:
-    # fmt: off
-        pre_reqs += f'<Row Technology="{location.name}" PrereqTech="{pre_req}" />{nl}'
-    # fmt: on
-    return pre_reqs
-
-
-def generate_update_techs(locations: List[CivVILocationData], items: List[CivVIItemData]) -> str:
-    """
-    Generates the SQL used to order the tech tree
-    """
-    location_tree_items = []
-    item_tree_items = []
-    for item in items:
-        item_tree_items.append(CivTreeItem(
-            item.name, item.cost, 0))
-        pass
-    for location in locations:
-        location_tree_items.append(CivTreeItem(
-            location.name, location.cost, location.uiTreeRow))
-
-    ordered_items = []
-    ordered_items += make_tree(item_tree_items, -2, -3)
-    ordered_items += location_tree_items
-
-    sql_statements = ""
-    # fmt: off
-    for item in ordered_items:
-        # Generate the SQL update statements for UITreeRow and Cost
-        sql_statements += f"UPDATE Technologies{nl}SET UITreeRow= {item.ui_tree_row}{nl}WHERE TechnologyType ='{item.name}';{nl}"
-        sql_statements += f"UPDATE Technologies{nl}SET Cost = {item.cost}{nl}WHERE TechnologyType ='{item.name}';{nl}--{nl}"
-    # fmt: on
-    return sql_statements
-
-
-def make_tree(items: List[CivTreeItem], rowMax: int, rowMin: int) -> List[CivTreeItem]:
-    """
-    Takes a dictionary of tech_name: cost, groups items by cost and if there aren't enough available rows then it will adjust the cost in a minor way to make them adjacent
-    """
-
-    new_items: List[CivTreeItem] = []
-    # Get all items grouped by cost
-    items_by_cost: Dict[int, List[CivTreeItem]] = {}
-    for item in items:
-        if item.cost not in items_by_cost:
-            items_by_cost[item.cost] = []
-        items_by_cost[item.cost].append(item)
-
-    for cost, items in items_by_cost.items():
-        new_cost = cost
-        row = rowMin
-        for item in items:
-            new_items.append(CivTreeItem(item.name, new_cost, row))
-            row += 1
-            if row > rowMax:
-                new_cost += 1
-                row = rowMin
-
-    return new_items

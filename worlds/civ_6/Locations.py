@@ -65,27 +65,24 @@ def generate_location_table():
     with open(new_prereq_path) as f:
         new_prereqs = json.load(f)
 
-    current_file_path = os.path.abspath(__file__)
-    current_directory = os.path.dirname(current_file_path)
-    existing_tech_path = os.path.join(
-        current_directory, 'data', 'existing_tech.json')
+    new_tech_path = os.path.join(
+        current_directory, 'data', 'new_tech.json')
 
-    with open(existing_tech_path) as f:
-        existing_data = json.load(f)
+    with open(new_tech_path) as f:
+        new_techs = json.load(f)
 
     era_techs = {}
 
     i = 0
-    for data in existing_data:
+    for data in new_techs:
         era_type = data['EraType']
         if era_type not in era_techs:
             era_techs[era_type] = {}
-        ap_name = format_tech_name(i)
 
-        display_data = next((item for item in new_prereqs if item["Technology"] == ap_name), None)
+        prereq_data = [item for item in new_prereqs if item['Technology'] == data['Type']]
 
-        era_techs[era_type][ap_name] = CivVILocationData(
-            ap_name, data['Cost'], display_data['UITreeRow'], i, era_type, display_data["PrereqTech"])
+        era_techs[era_type][data["Type"]] = CivVILocationData(
+            data["Type"], data['Cost'], data['UITreeRow'], i, era_type, prereq_data)
         i += 1
 
     return era_techs
