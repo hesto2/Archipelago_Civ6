@@ -1,14 +1,9 @@
 from dataclasses import dataclass
 import os
-from typing import Dict, List, NamedTuple
 import zipfile
-from BaseClasses import Location, MultiWorld
+from BaseClasses import MultiWorld
 from worlds.Files import APContainer
-import json
 import uuid
-
-from worlds.civ_6.Items import CivVIItemData
-from worlds.civ_6.Locations import CivVILocationData
 
 
 # Python fstrings don't allow backslashes, so we use this workaround

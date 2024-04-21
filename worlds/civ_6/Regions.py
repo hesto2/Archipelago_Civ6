@@ -4,7 +4,8 @@ from Utils import visualize_regions
 
 from BaseClasses import MultiWorld, Region, Entrance
 from worlds.AutoWorld import World
-from worlds.civ_6.Locations import CivVILocation, EraType
+from worlds.civ_6.Enum import EraType
+from worlds.civ_6.Locations import CivVILocation
 from .Options import CivVIOptions
 
 

@@ -4,7 +4,7 @@ generate_new_techs: Generates AP techs based on the index of the existing techs 
   args: file_path (optional), output_file (optional)
 generate_new_prereqs: Copies the existing prereqs but changes out the names for the associated AP techs
   args: file_path (optional), output_file (optional)
-generate_new_prereqs_xml: Takes the data in new_prereqs.json and generates an XML file in the static_mod_files
+generate_new_prereqs_xml: Takes the data in new_tech_prereqs.json and generates an XML file in the static_mod_files
   args: file_path (optional), output_file (optional)
 """
 import json
@@ -67,7 +67,7 @@ def generate_new_prereqs(file_path, output_file):
 
 
 def generate_new_prereqs_xml(file_path, output_file):
-    """Takes the data in new_prereqs.json and generates an XML file in the static_mod_files. Then takes the existing tech and adds a "tech_blocker" prereq tp each existing one"""
+    """Takes the data in new_tech_prereqs.json and generates an XML file in the static_mod_files. Then takes the existing tech and adds a "tech_blocker" prereq tp each existing one"""
     with open(file_path, 'r') as file:
         prereq_data = json.load(file)
     with open("./data/existing_tech.json", 'r') as file:
@@ -106,13 +106,13 @@ if __name__ == "__main__":
     existing_tech = "./data/existing_tech.json"
     new_tech = "./data/new_tech.json"
     existing_prereqs = "./data/existing_prereqs.json"
-    new_prereqs = "./data/new_prereqs.json"
+    new_tech_prereqs = "./data/new_tech_prereqs.json"
     new_prereqs_xml = "./static_mod_files/NewTechPrereqs.xml"
 
     if len(sys.argv) < 2:
         generate_new_techs(existing_tech, new_tech)
-        generate_new_prereqs(existing_prereqs, new_prereqs)
-        generate_new_prereqs_xml(new_prereqs, new_prereqs_xml)
+        generate_new_prereqs(existing_prereqs, new_tech_prereqs)
+        generate_new_prereqs_xml(new_tech_prereqs, new_prereqs_xml)
     else:
         function_name = sys.argv[1]
 
@@ -127,7 +127,7 @@ if __name__ == "__main__":
 
         elif function_name == "generate_new_prereqs":
             file_path = "./data/existing_prereqs.json"
-            output_file = "./data/new_prereqs.json"
+            output_file = "./data/new_tech_prereqs.json"
 
             if len(sys.argv) > 2:
                 file_path = sys.argv[2]
@@ -135,7 +135,7 @@ if __name__ == "__main__":
             generate_new_prereqs(file_path, output_file)
 
         elif function_name == "generate_new_prereqs_xml":
-            file_path = "./data/new_prereqs.json"
+            file_path = "./data/new_tech_prereqs.json"
             output_file = "./static_mod_files/NewTechPrereqs.xml"
             if len(sys.argv) > 2:
                 file_path = sys.argv[2]
