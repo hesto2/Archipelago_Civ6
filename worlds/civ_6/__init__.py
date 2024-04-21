@@ -6,7 +6,6 @@ from worlds.civ_6.Container import CivVIContainer, generate_modinfo, generate_ne
 from .Items import generate_item_table, CivVIItem
 from .Locations import CivVILocationData, EraType, generate_location_table
 from .Options import CivVIOptions
-from .Rules import set_rules
 from .Regions import create_regions
 from BaseClasses import Item, MultiWorld, Tutorial
 from ..AutoWorld import World, WebWorld
@@ -48,6 +47,12 @@ class CivVIWorld(World):
         super().__init__(multiworld, player)
         self.location_by_era = generate_location_table()
         self.item_by_era = generate_item_table()
+        self.item_name_groups = {}
+
+        for era in EraType:
+            self.item_name_groups[era.value] = [item.name for item in self.item_by_era[era.value].values()]
+
+
         self.location_table = {}
         self.item_table = {}
 
@@ -63,10 +68,6 @@ class CivVIWorld(World):
 
     def create_regions(self):
         create_regions(self, self.options, self.player)
-
-    def set_rules(self):
-        # set_rules(self.multiworld, self.player, location_table.keys())
-        pass
 
     def create_item(self, name: str) -> Item:
         item = self.item_table[name]

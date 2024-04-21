@@ -20,7 +20,7 @@ class CivVIItemData:
     code: int
     cost: int
 
-    def __init__(self, name, civ_vi_id: int, cost: int, classification: ItemClassification = ItemClassification.useful):
+    def __init__(self, name, civ_vi_id: int, cost: int, classification: ItemClassification = ItemClassification.progression):
         self.classification = classification
         self.civ_vi_id = civ_vi_id
         self.name = name

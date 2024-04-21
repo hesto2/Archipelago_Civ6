@@ -1558,16 +1558,6 @@ function PopulateFilterData()
 		local controlTable	 = {};
 		Controls.FilterPulldown:BuildEntry( "FilterItemInstance", controlTable );
 
-		-- If a text icon exists, use it and bump the label in the button over.
-		--[[ TODO: Uncomment if icons are added.
-		if filterIconText ~= nil and filterIconText ~= "" then
-			controlTable.IconText:SetText( Locale.Lookup(filterIconText) );
-			controlTable.DescriptionText:SetOffsetX(24);
-		else
-			controlTable.IconText:SetText( "" );
-			controlTable.DescriptionText:SetOffsetX(4);
-		end
-		]]
 		controlTable.DescriptionText:SetOffsetX(8);
 		controlTable.DescriptionText:SetText( filterLabel );
 
