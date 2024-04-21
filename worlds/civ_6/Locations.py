@@ -1,6 +1,6 @@
 import os
 from typing import Dict, List, Optional
-from BaseClasses import Location
+from BaseClasses import Location, Region
 import json
 
 from worlds.civ_6.Enum import CivVICheckType, EraType
@@ -32,6 +32,14 @@ class CivVILocationData():
 
 class CivVILocation(Location):
     game: str = "Civilization VI"
+    location_type: CivVICheckType
+
+    def __init__(self, player: int, name: str = '', address: int | None = None, parent: Region | None = None):
+        super().__init__(player, name, address, parent)
+        if name.split("_")[0] == "TECH":
+            self.location_type = CivVICheckType.TECH
+        elif name.split("_")[0] == "CIVIC":
+            self.location_type = CivVICheckType.CIVIC
 
 
 def format_tech_name(id: int) -> str:
@@ -45,6 +53,7 @@ def generate_location_table():
       "ERA_ANCIENT": {
         "TECH_AP0": CivVILocationData,
         "TECH_AP1": CivVILocationData,
+        "CIVIC_AP0": CivVILocationData,
       },
       ...
     }
@@ -62,19 +71,40 @@ def generate_location_table():
     with open(new_tech_path) as f:
         new_techs = json.load(f)
 
-    era_techs = {}
-
-    i = 0
+    era_locations = {}
+    id_base = 0
+# Techs
     for data in new_techs:
         era_type = data['EraType']
-        if era_type not in era_techs:
-            era_techs[era_type] = {}
+        if era_type not in era_locations:
+            era_locations[era_type] = {}
 
         prereq_data = [
             item for item in new_tech_prereqs if item['Technology'] == data['Type']]
 
-        era_techs[era_type][data["Type"]] = CivVILocationData(
-            data["Type"], data['Cost'], data['UITreeRow'], i, era_type, CivVICheckType.TECH, prereq_data)
-        i += 1
+        era_locations[era_type][data["Type"]] = CivVILocationData(
+            data["Type"], data['Cost'], data['UITreeRow'], id_base, era_type, CivVICheckType.TECH, prereq_data)
+        id_base += 1
+# Civics
+    new_civic_prereq_path = os.path.join(
+        current_directory, 'data', 'new_civic_prereqs.json')
+    with open(new_civic_prereq_path) as f:
+        new_civic_prereqs = json.load(f)
 
-    return era_techs
+    new_civic_path = os.path.join(
+        current_directory, 'data', 'new_civics.json')
+
+    with open(new_civic_path) as f:
+        new_civics = json.load(f)
+
+    for data in new_civics:
+        era_type = data['EraType']
+        if era_type not in era_locations:
+            era_locations[era_type] = {}
+        prereq_data = [
+            item for item in new_civic_prereqs if item['Civic'] == data['Type']]
+        era_locations[era_type][data["Type"]] = CivVILocationData(
+            data["Type"], data['Cost'], data['UITreeRow'], id_base, era_type, CivVICheckType.CIVIC, prereq_data)
+        id_base += 1
+
+    return era_locations

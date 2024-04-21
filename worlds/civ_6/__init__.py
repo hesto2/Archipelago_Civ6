@@ -2,7 +2,7 @@ import os
 from typing import Dict
 
 import Utils
-from worlds.civ_6.Container import CivVIContainer, generate_modinfo, generate_new_technologies
+from worlds.civ_6.Container import CivVIContainer, generate_modinfo, generate_new_items
 from .Items import generate_item_table, CivVIItem
 from .Locations import CivVILocationData, EraType, generate_location_table
 from .Options import CivVIOptions
@@ -57,7 +57,7 @@ class CivVIWorld(World):
         self.item_table = {}
 
         for era, locations in self.location_by_era.items():
-            for tech_name, location in locations.items():
+            for item_name, location in locations.items():
                 self.location_name_to_id[location.name] = location.code
                 self.location_table[location.name] = location
 
@@ -91,7 +91,7 @@ class CivVIWorld(World):
             output_directory, mod_name + "_" + Utils.__version__)
         mod_files = {
             f"{mod_name}/Changes.modinfo": generate_modinfo(self.multiworld),
-            f"{mod_name}/NewTechnologies.xml": generate_new_technologies(self),
+            f"{mod_name}/NewItems.xml": generate_new_items(self),
         }
 
 

@@ -1,9 +1,13 @@
 from dataclasses import dataclass
 import os
+from typing import List
 import zipfile
 from BaseClasses import MultiWorld
 from worlds.Files import APContainer
 import uuid
+
+from worlds.civ_6.Enum import CivVICheckType
+from worlds.civ_6.Locations import CivVILocation
 
 
 # Python fstrings don't allow backslashes, so we use this workaround
@@ -50,8 +54,8 @@ def generate_modinfo(multiworld: MultiWorld) -> str:
   </Properties>
 
   <Files>
-    <File>NewTechnologies.xml</File>
-    <File>NewTechPrereqs.xml</File>
+    <File>NewItems.xml</File>
+    <File>NewPrereqs.xml</File>
     <File>ResearchChooser.lua</File>
     <File>ResearchChooser.xml</File>
     <File>TechTree.lua</File>
@@ -59,13 +63,13 @@ def generate_modinfo(multiworld: MultiWorld) -> str:
     <File>TechTreeNode.xml</File>
   </Files>
   <InGameActions>
-    <UpdateDatabase id="ArchipelagoTech">
-      <File>NewTechnologies.xml</File>
+    <UpdateDatabase id="ArchipelagoItems">
+      <File>NewItems.xml</File>
       <Properties>
         <LoadOrder>212</LoadOrder>
       </Properties>
 
-      <File>NewTechPrereqs.xml</File>
+      <File>NewPrereqs.xml</File>
     </UpdateDatabase>
     <ImportFiles id="ArchipelagoReplacers">
       <Properties>
@@ -98,18 +102,26 @@ def generate_modinfo(multiworld: MultiWorld) -> str:
         """
 
 
-def generate_new_technologies(world) -> str:
+def generate_new_items(world) -> str:
     """
-    Generates the XML for the new techs as well as the tech blocker used to prevent humans from researching their own techs
+    Generates the XML for the new techs/civics as well as the blockers used to prevent players from researching their own items
     """
-    locations = world.multiworld.get_filled_locations(world.player)
+    locations: List[CivVILocation] = world.multiworld.get_filled_locations(
+        world.player)
+    techs = [location for location in locations if location.location_type ==
+             CivVICheckType.TECH]
+    civics = [location for location in locations if location.location_type ==
+              CivVICheckType.CIVIC]
 # fmt: off
     return f"""<?xml version="1.0" encoding="utf-8"?>
 <GameInfo>
   <Types>
     <Row Type="TECH_BLOCKER" Kind="KIND_TECH" />
-  {"".join([f'{tab}<Row Type="{location.name}" Kind="KIND_TECH" />{nl}' for
-           location in locations])}
+    <Row Type="CIVIC_BLOCKER" Kind="KIND_CIVIC" />
+  {"".join([f'{tab}<Row Type="{tech.name}" Kind="KIND_TECH" />{nl}' for
+           tech in techs])}
+  {"".join([f'{tab}<Row Type="{civic.name}" Kind="KIND_CIVIC" />{nl}' for
+           civic in civics])}
   </Types>
   <Technologies>
       <Row TechnologyType="TECH_BLOCKER" Name="TECH_BLOCKER" EraType="ERA_FUTURE" UITreeRow="0" Cost="9999" AdvisorType="ADVISOR_GENERIC" Description="Archipelago Tech created to prevent players from researching their own tech"/>
@@ -121,8 +133,20 @@ def generate_new_technologies(world) -> str:
                f'Cost="{world.location_table[location.name].cost}" '
                f'Description="{location.name}" '
                f'AdvisorType="ADVISOR_GENERIC" />{nl}'
-               for location in locations])}
+               for location in techs])}
   </Technologies>
+  <Civics>
+      <Row CivicType="CIVIC_BLOCKER" Name="CIVIC_BLOCKER" EraType="ERA_FUTURE" UITreeRow="0" Cost="9999" AdvisorType="ADVISOR_GENERIC" Description="Archipelago Civic created to prevent players from researching their own civics"/>
+{"".join([f'{tab}<Row CivicType="{location.name}" '
+               f'Name="{world.multiworld.player_name[location.item.player]}{apo}s '
+               f'{location.item.name}" '
+               f'EraType="{world.location_table[location.name].era_type}" '
+               f'UITreeRow="{world.location_table[location.name].uiTreeRow}" '
+               f'Cost="{world.location_table[location.name].cost}" '
+               f'Description="{location.name}" '
+               f'AdvisorType="ADVISOR_GENERIC" />{nl}'
+               for location in civics])}
+  </Civics>
 </GameInfo>
     """
 # fmt: on

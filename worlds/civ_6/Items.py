@@ -10,9 +10,14 @@ CIV_VI_AP_ITEM_ID_BASE = 5041000
 class CivVIItem(Item):
     game: str = "Civilization VI"
     civ_vi_id: int
+    item_type: CivVICheckType
 
     def __init__(self, name: str, classification: ItemClassification, civ_vi_id: int | None, player: int):
         super().__init__(name, classification, civ_vi_id + CIV_VI_AP_ITEM_ID_BASE, player)
+        if name.split("_")[0] == "TECH":
+            self.item_type = CivVICheckType.TECH
+        elif name.split("_")[0] == "CIVIC":
+            self.item_type = CivVICheckType.CIVIC
 
 
 class CivVIItemData:
@@ -38,7 +43,9 @@ def generate_item_table():
     {
       "ERA_ANCIENT": {
         "TECH_POTTERY": ItemData,
-        "TECH_ANIMAL_HUSBANDRY": ItemData
+        "TECH_ANIMAL_HUSBANDRY": ItemData,
+        "CIVIC_CODE_OF_LAWS": ItemData,
+        "CIVIC_CRAFTSMANSHIP": ItemData
       },
       ...
     }
@@ -51,17 +58,29 @@ def generate_item_table():
 
     with open(existing_tech_path) as f:
         existing_techs = json.load(f)
-    era_techs = {}
+    era_items = {}
 
-    i = 0
+    id_base = 0
     for tech in existing_techs:
         era_type = tech['EraType']
-        if era_type not in era_techs:
-            era_techs[era_type] = {}
-        era_techs[era_type][tech["Type"]] = CivVIItemData(
-            tech["Type"], i, tech["Cost"], CivVICheckType.TECH)
-        i += 1
+        if era_type not in era_items:
+            era_items[era_type] = {}
+        era_items[era_type][tech["Type"]] = CivVIItemData(
+            tech["Type"], id_base, tech["Cost"], CivVICheckType.TECH)
+        id_base += 1
 
-    item_table = era_techs
+  # Generate Civics
+    existing_civics_path = os.path.join(
+        current_directory, 'data', 'existing_civics.json')
 
-    return item_table
+    with open(existing_civics_path) as f:
+        existing_civics = json.load(f)
+    for civic in existing_civics:
+        era_type = civic['EraType']
+        if era_type not in era_items:
+            era_items[era_type] = {}
+        era_items[era_type][civic["Type"]] = CivVIItemData(
+            civic["Type"], id_base, civic["Cost"], CivVICheckType.CIVIC)
+        id_base += 1
+
+    return era_items

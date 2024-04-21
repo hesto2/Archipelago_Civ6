@@ -24,8 +24,8 @@ def create_regions(world: World, options: CivVIOptions, player: int):
         world.multiworld.regions.append(era_region)
 
     def get_count_required(era: EraType):
-        # TODO: Add player option for checking how many items from previous era are expected to be found rather than 75%
-        pct_previous_era_required = 1
+        # TODO: Add player option for checking how many items from previous era are expected to be found
+        pct_previous_era_required = .9
         total = len(world.item_name_groups[era.value])
         return int(total *
                    pct_previous_era_required)
