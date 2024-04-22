@@ -254,9 +254,6 @@ function SetCurrentNode( hash )
 		local localPlayerCulture = Players[Game.GetLocalPlayer()]:GetCulture();
 		-- Get the complete path to the tech
 		local pathToCivic = localPlayerCulture:GetCivicPath( hash );
-    for key, value in pairs(pathToCivic) do
-        print(key, value)
-    end
 		local tParameters = {};
 		tParameters[PlayerOperations.PARAM_CIVIC_TYPE]	= pathToCivic;
 		if m_shiftDown then
@@ -1606,13 +1603,8 @@ function PopulateItemData() -- Note that we are overriding this function without
 	local tCivicModCache:table = TechAndCivicSupport_BuildCivicModifierCache();
 
 	local civicNodes:table = UITree.GetAvailableCivics();
-	-- for _,civicNode in ipairs(civicNodes) do
 	for row in GameInfo.Civics() do
     if ShouldShowCivic(row.CivicType) then
-      -- for key, value in pairs(row) do
-      --     print(key, value)
-      -- end
-      -- print("_____________")
 
       local kEntry:table	= {};
       kEntry.Type			= row.CivicType;
@@ -1623,7 +1615,7 @@ function PopulateItemData() -- Note that we are overriding this function without
       kEntry.Description	= row.Description and Locale.Lookup( row.Description );
       kEntry.EraType		= row.EraType;
       kEntry.Hash			= GetHash(kEntry.Type);
-      kEntry.Index		= row.CivicType;
+      kEntry.Index		= row.Index;
       kEntry.IsBoostable	= false;
       kEntry.IsRevealed	= false;
       kEntry.Prereqs		= {};				-- IDs for prerequisite item(s)
