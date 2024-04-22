@@ -110,7 +110,7 @@ def generate_new_civic_prereqs(file_path, output_file):
         # Future techs don't have specific prereqs so we need to add them manually
         i = 0
         for item in new_civics:
-            if item["EraType"] == "ERA_FUTURE":
+            if item["EraType"] == "ERA_FUTURE" and item["Type"] != "CIVIC_AP50":
                 if i != 0:
                     output.write(",\n")
                 output.write(

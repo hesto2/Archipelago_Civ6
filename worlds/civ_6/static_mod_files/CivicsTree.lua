@@ -2,15 +2,15 @@
 
 -- ===========================================================================
 --	NOTES:
---	Items exist in one of 7 "rows" that span horizontally and within a 
+--	Items exist in one of 7 "rows" that span horizontally and within a
 --	"column" based on the era and cost.
 --
 --	Rows    Start   Eras->
---	-3               _____        _____  
---	-2            /-|_____|----/-|_____| 
---	-1            |  _____     |       Nodes 
---	0        O----%-|_____|----'        
---	1       
+--	-3               _____        _____
+--	-2            /-|_____|----/-|_____|
+--	-1            |  _____     |       Nodes
+--	0        O----%-|_____|----'
+--	1
 --	2
 --	3
 --
@@ -20,7 +20,7 @@
 g_ExtraIconData = {};
 include("CivicsTreeIconLoader_", true);
 
-include( "InstanceManager" );	
+include( "InstanceManager" );
 include( "SupportFunctions" );
 include( "Civ6Common" );			-- Tutorial check support
 include( "TechAndCivicSupport" );
@@ -69,7 +69,7 @@ ROW_MAX					= 3;			-- Highest level row above 0
 ROW_MIN					= -3;			-- Lowest level row below 0
 SIZE_NODE_X				= 420;			-- Item node dimensions
 SIZE_NODE_Y				= 84;
-SIZE_NODE_LARGE_Y		= 140;				
+SIZE_NODE_LARGE_Y		= 140;
 STATUS_ART				= {};
 STATUS_ART_LARGE		= {};
 STATUS_ART[ITEM_STATUS.BLOCKED]			= { Name="BLOCKED",			TextColor0=UI.GetColorValueFromHexLiteral(0xff202726), TextColor1=UI.GetColorValueFromHexLiteral(0x00000000), FillTexture="CivicsTree_GearButtonTile_Disabled.dds",		BGU=0,BGV=(SIZE_NODE_Y*3),		HideIcon=true,  IsButton=false,	BoltOn=false,	IconBacking=PIC_METER_BACK };
@@ -95,6 +95,7 @@ g_kEras					= {};		-- type to costs
 g_kItemDefaults			= {};		-- Static data about items
 g_uiNodes				= {};
 g_uiConnectorSets		= {};
+SHOW_ARCHIPELAGO_TREE = true
 
 
 
@@ -129,7 +130,6 @@ local PATH_MARKER_OFFSET_X			:number = 20;
 local PATH_MARKER_OFFSET_Y			:number = 50;
 local PATH_MARKER_NUMBER_0_9_OFFSET	:number = 20;
 local PATH_MARKER_NUMBER_10_OFFSET	:number = 15;
-
 local LINE_LENGTH_BEFORE_CURVE		:number = 20;			-- How long to make a line before a node before it curves
 local LINE_VERTICAL_OFFSET			:number = 0;
 local PADDING_NODE_STACK_Y			:number = 20;
@@ -190,6 +190,25 @@ local m_kScrambledRowLookup	:table  = {-1,-3,2,0,1,-2,3};		-- To help scramble m
 --	FUNCTIONS
 -- ===========================================================================
 
+function IsAPCivic(name)
+    local start = "CIVIC_AP"
+    if name:sub(1, #start) == start then
+        return true
+    end
+    return false
+end
+
+function ShouldShowCivic(name)
+    if name == "CIVIC_BLOCKER" then
+        return false
+    end
+    if IsAPCivic(name) then
+        return SHOW_ARCHIPELAGO_TREE
+    end
+    return not SHOW_ARCHIPELAGO_TREE
+end
+
+
 -- ===========================================================================
 --	Accessor (for MODs) so current data doesn't need to be made global.
 -- ===========================================================================
@@ -207,7 +226,7 @@ end
 function AddCivicToEra( kEntry:table )
 	if m_kEraCounter[kEntry.EraType] == nil then
 		m_kEraCounter[kEntry.EraType] = 0;
-	end			
+	end
 	m_kEraCounter[kEntry.EraType] = m_kEraCounter[ kEntry.EraType ] + 1;
 end
 
@@ -235,6 +254,9 @@ function SetCurrentNode( hash )
 		local localPlayerCulture = Players[Game.GetLocalPlayer()]:GetCulture();
 		-- Get the complete path to the tech
 		local pathToCivic = localPlayerCulture:GetCivicPath( hash );
+    for key, value in pairs(pathToCivic) do
+        print(key, value)
+    end
 		local tParameters = {};
 		tParameters[PlayerOperations.PARAM_CIVIC_TYPE]	= pathToCivic;
 		if m_shiftDown then
@@ -251,14 +273,17 @@ function SetCurrentNode( hash )
 end
 
 -- ===========================================================================
---	If the next item isn't immediate, show a path of #s traversing the tree 
+--	If the next item isn't immediate, show a path of #s traversing the tree
 --	to the desired node.
 -- ===========================================================================
 function RealizePathMarkers()
-	
 	local pCulture	:table = Players[Game.GetLocalPlayer()]:GetCulture();
 	local kNodeIds	:table = pCulture:GetCivicQueue();		-- table: index, IDs
-	
+
+  if SHOW_ARCHIPELAGO_TREE == false then
+    kNodeIds = {}
+  end
+
 	m_kPathMarkerIM:ResetInstances();
 
 	for i,nodeNumber in pairs(kNodeIds) do
@@ -303,7 +328,7 @@ end
 --	Convert a virtual column # and row # to actual pixels within the
 --	scrollable tree area.
 -- ===========================================================================
-function ColumnRowToPixelXY( column:number, row:number)	
+function ColumnRowToPixelXY( column:number, row:number)
 	local horizontal		:number = ((column-1) * COLUMNS_NODES_SPAN * COLUMN_WIDTH) + PADDING_TIMELINE_LEFT + PADDING_PAST_ERA_LEFT;
 	local vertical			:number = PADDING_NODE_STACK_Y + (SIZE_WIDESCREEN_HEIGHT / 2) + (row * SIZE_NODE_Y);
 	return horizontal, vertical;
@@ -337,14 +362,14 @@ function LayoutNodeGrid()
 
 	-- By era, layout all items in single "sort" row
 	local eraGrids:table = {};					-- each era has it's own "grid" of items to layout
-	for _,item in pairs(g_kItemDefaults) do		
+	for _,item in pairs(g_kItemDefaults) do
 
 		-- Create any data structures related to this era/row that don't exist:
 		if eraGrids[item.EraType] == nil then
 			eraGrids[item.EraType] = { rows={}, sortRow={ columns={} } };
 			for i= ROW_MIN, ROW_MAX, 1 do
 				eraGrids[item.EraType].rows[i] = { columns={} };
-			end			
+			end
 		end
 
 		-- For first placement, ignore row and place everything in the middle (row 0)
@@ -391,9 +416,9 @@ function LayoutNodeGrid()
 	end
 
 	-- Manually sort based on prereqs, 2(N log N)
-	for eraType,grid in pairs(eraGrids) do		
+	for eraType,grid in pairs(eraGrids) do
 		local numEraItems:number = table.count(grid.sortRow.columns);
-		if numEraItems > 1 then			
+		if numEraItems > 1 then
 			for pass=1,2,1 do					-- Make 2 passes so the first swapped item is checked.
 				for a=1,numEraItems do
 					for b=a,numEraItems do
@@ -402,14 +427,14 @@ function LayoutNodeGrid()
 								if prereq == grid.sortRow.columns[b] then
 									grid.sortRow.columns[a], grid.sortRow.columns[b] = grid.sortRow.columns[b], grid.sortRow.columns[a];	-- swap LUA style
 								end
-							end					
+							end
 						end
 					end
 				end
 			end
 		end
 	end
-	
+
 	-- Unflatten single, traversing each era grid from left to right, pushing the item to the right if it hits a prereq
 	for eraType,grid in pairs(eraGrids) do
 		local maxColumns:number = table.count(grid.sortRow.columns);	-- Worst case, straight line
@@ -422,7 +447,7 @@ function LayoutNodeGrid()
 			-- No prereqs? Just put at start, otherwise push forward past them all.
 			if item.Prereqs ~= nil then
 				for _,prereq in ipairs(item.Prereqs) do							-- For every prereq
-					local isPrereqMatched :boolean = false;					
+					local isPrereqMatched :boolean = false;
 					for x=pos,maxColumns,1 do									-- For every column (from last highest found start position)
 						for y=ROW_MIN, ROW_MAX,1 do								-- For every row in the column
 							if grid.rows[y].columns[x] ~= nil then				-- Is a prereq in that position of the grid?
@@ -433,7 +458,7 @@ function LayoutNodeGrid()
 								end
 							end
 						end
-						if isPrereqMatched then 							
+						if isPrereqMatched then
 							-- Ensuring this node wasn't just placed on top of another:
 							while( grid.rows[item.UITreeRow].columns[pos] ~= nil ) do
 								pos = pos + 1;
@@ -497,7 +522,7 @@ function LayoutNodeGrid()
 			if pos > g_kEras[item.EraType].NumColumns then
 				g_kEras[item.EraType].NumColumns = pos;
 			end
-		end	
+		end
 	end
 
 	-- Determine total # of columns prior to a given era, and max columns overall.
@@ -517,13 +542,13 @@ function LayoutNodeGrid()
 		index = index + 1;
 	end
 	m_maxColumns = priorColumns;
-	
+
 	-- Create grid used to route lines, determine maximum number of columns.
 	kNodeGrid	 = {};
 	for i = ROW_MIN,ROW_MAX,1 do
 		kNodeGrid[i] = {};
 	end
-	for _,item in pairs(g_kItemDefaults) do	
+	for _,item in pairs(g_kItemDefaults) do
 		local era		:table  = g_kEras[item.EraType];
 		local columnNum :number = era.PriorColumns + item.Column;
 
@@ -538,7 +563,7 @@ end
 
 -- ===========================================================================
 --	Create UI controls based on the a node grid and connecting paths.
---	
+--
 --	kNodeGrid,	A 2D table array of [row][columns]=itemType
 --	kPaths,		A table describing paths.  TODO: Describe this format. ??TRON
 --
@@ -562,8 +587,8 @@ function AllocateUI( kNodeGrid:table, kPaths:table )
 	m_kEraLabelIM:ResetInstances();
 	m_kEraDotIM:ResetInstances();
 
-	for era,eraData in pairs(g_kEras) do		
-		
+	for era,eraData in pairs(g_kEras) do
+
 		local instArt :table = m_kEraArtIM:GetInstance();
 		if eraData.BGTexture ~= nil then
 			instArt.BG:SetTexture( eraData.BGTexture );
@@ -574,7 +599,7 @@ function AllocateUI( kNodeGrid:table, kPaths:table )
 		end
 
 		instArt.Top:SetOffsetX(GetEraArtXOffset(instArt, eraData));
-		instArt.Top:SetOffsetY( (SIZE_WIDESCREEN_HEIGHT * 0.5) - (instArt.BG:GetSizeY()*0.5) );	
+		instArt.Top:SetOffsetY( (SIZE_WIDESCREEN_HEIGHT * 0.5) - (instArt.BG:GetSizeY()*0.5) );
 		instArt.Top:SetSizeVal(eraData.NumColumns*SIZE_NODE_X, 600);
 
 		local inst:table = m_kEraLabelIM:GetInstance();
@@ -586,13 +611,13 @@ function AllocateUI( kNodeGrid:table, kPaths:table )
 		local markerx:number = (eraData.PriorColumns / m_maxColumns) * Controls.ScrollbarBackgroundArt:GetSizeX();
 		if markerx > 0 then
 			local inst:table = m_kEraDotIM:GetInstance();
-			inst.Dot:SetOffsetX(markerx);	
-		end	
+			inst.Dot:SetOffsetX(markerx);
+		end
 	end
-	
+
 	-- Early out if not a real player.
 	local playerId :number = Game.GetLocalPlayer();
-	if playerId == PlayerTypes.OBSERVER or playerId == PlayerTypes.NONE then 
+	if playerId == PlayerTypes.OBSERVER or playerId == PlayerTypes.NONE then
 		return;
 	end
 
@@ -603,7 +628,7 @@ function AllocateUI( kNodeGrid:table, kPaths:table )
 
 	-- Actually build UI nodes
 	local isForcedSmall	:boolean = (m_isTreeRandomized==true);
-	for _,item in pairs(g_kItemDefaults) do		
+	for _,item in pairs(g_kItemDefaults) do
 
 		local uiNode		:table	= AllocateNode( item, isForcedSmall );
 
@@ -613,7 +638,7 @@ function AllocateUI( kNodeGrid:table, kPaths:table )
 		local horizontal, vertical = ColumnRowToPixelXY(era.PriorColumns + item.Column, item.UITreeRow );
 
 		-- Set position and save.
-		uiNode.x	= horizontal;					
+		uiNode.x	= horizontal;
 		uiNode.y	= vertical - VERTICAL_CENTER;
 		uiNode.Top:SetOffsetVal( horizontal, vertical);
 		g_uiNodes[item.Type] = uiNode;
@@ -634,7 +659,7 @@ function AllocateUI( kNodeGrid:table, kPaths:table )
 		local scanRow:number = item.UITreeRow;
 
 		for _,prereqId in pairs(item.Prereqs) do
-			
+
 			local previousRow	:number = 0;
 			local previousColumn:number = 0;
 			if prereqId == PREREQ_ID_TREE_START then
@@ -647,13 +672,13 @@ function AllocateUI( kNodeGrid:table, kPaths:table )
 					previousRow		= prereq.UITreeRow;
 					scanRow			= previousRow;		-- scan the row that this dependancy is on
 					previousColumn	= g_kEras[prereq.EraType].PriorColumns + prereq.Column;
-				else			
+				else
 					if table.count(debugExplicitList) == 0 then
 						UI.DataError("Unable to find PREREQ for tech '"..item.Type.."'("..tostring(item.Index)..")");
 					end
 				end
 			end
-			
+
 			local startColumn	:number = g_kEras[item.EraType].PriorColumns + item.Column;
 			local column		:number = startColumn - 1;										-- start one back
 			while kNodeGrid[scanRow][column] == nil and column > previousColumn do		-- keep working backwards until hitting a node
@@ -664,8 +689,8 @@ function AllocateUI( kNodeGrid:table, kPaths:table )
 
 				-- Nothing goes before this, not even a fake start area.
 
-			elseif previousRow < item.UITreeRow or previousRow > item.UITreeRow  then				
-				
+			elseif previousRow < item.UITreeRow or previousRow > item.UITreeRow  then
+
 				-- Obtain the line objects
 				local inst	:table = m_kLineIM:GetInstance();
 				local line1	:table = inst.LineImage; inst = m_kLineIM:GetInstance();
@@ -689,10 +714,10 @@ function AllocateUI( kNodeGrid:table, kPaths:table )
 					LineY2 = node.y+((previousRow-item.UITreeRow)*SIZE_NODE_Y)- LINE_VERTICAL_OFFSET;-- below
 					LineY1 = node.y +LINE_VERTICAL_OFFSET;
 				end
-				
-				line1:SetOffsetVal(LineEndX1 + SIZE_PATH_HALF, LineY1 - SIZE_PATH_HALF);				
+
+				line1:SetOffsetVal(LineEndX1 + SIZE_PATH_HALF, LineY1 - SIZE_PATH_HALF);
 				line1:SetSizeVal( LineStartX - LineEndX1 - SIZE_PATH_HALF, SIZE_PATH);
-				
+
 				line2:SetOffsetVal(LineEndX1 - SIZE_PATH_HALF, LineY1 - SIZE_PATH_HALF);
 				line2:SetSizeVal( SIZE_PATH, SIZE_PATH);
 				if previousRow < item.UITreeRow  then
@@ -701,20 +726,20 @@ function AllocateUI( kNodeGrid:table, kPaths:table )
 					line2:SetTexture("Controls_TreePathDashNE");
 				end
 
-				line3:SetOffsetVal(LineEndX1 - SIZE_PATH_HALF, math.min(LineY1 + SIZE_PATH_HALF, LineY2 + SIZE_PATH_HALF) );	
+				line3:SetOffsetVal(LineEndX1 - SIZE_PATH_HALF, math.min(LineY1 + SIZE_PATH_HALF, LineY2 + SIZE_PATH_HALF) );
 				line3:SetSizeVal( SIZE_PATH, math.abs(LineY1 - LineY2) - SIZE_PATH );
 				line3:SetTexture("Controls_TreePathDashNS");
-				
+
 				line4:SetOffsetVal(LineEndX1 - SIZE_PATH_HALF, LineY2 - SIZE_PATH_HALF);
 				line4:SetSizeVal( SIZE_PATH, SIZE_PATH);
 				if previousRow < item.UITreeRow  then
 					line4:SetTexture("Controls_TreePathDashES");
 				else
 					line4:SetTexture("Controls_TreePathDashEN");
-				end	
+				end
 
 				line5:SetSizeVal(  LineEndX1 - LineEndX2 - SIZE_PATH_HALF, SIZE_PATH );
-				line5:SetOffsetVal(LineEndX2, LineY2 - SIZE_PATH_HALF);	
+				line5:SetOffsetVal(LineEndX2, LineY2 - SIZE_PATH_HALF);
 
 				-- Directly store the line (not instance) with a key name made up of this type and the prereq's type.
 				g_uiConnectorSets[item.Type..","..prereqId] = {line1,line2,line3,line4,line5};
@@ -726,12 +751,12 @@ function AllocateUI( kNodeGrid:table, kPaths:table )
 				local end1, _ = ColumnRowToPixelXY( column, item.UITreeRow );
 				end1 = end1 + SIZE_NODE_X;
 
-				line:SetOffsetVal(end1, node.y - SIZE_PATH_HALF);				
-				line:SetSizeVal( node.x - end1, SIZE_PATH);	
+				line:SetOffsetVal(end1, node.y - SIZE_PATH_HALF);
+				line:SetSizeVal( node.x - end1, SIZE_PATH);
 
 				-- Directly store the line (not instance) with a key name made up of this type and the prereq's type.
 				g_uiConnectorSets[item.Type..","..prereqId] = {line};
-			end				
+			end
 		end
 	end
 
@@ -794,8 +819,8 @@ end
 --					the type of node to be researched.)
 -- ===========================================================================
 function AllocateNode( item:table, isForcedSmall:boolean )
-	-- Create node based on # of unlocks for this civic.	
-	numUnlocks, hideDescriptionIcon, extraUnlocks = GetCountHideDescriptionAndExtraUnlocks( item );		
+	-- Create node based on # of unlocks for this civic.
+	numUnlocks, hideDescriptionIcon, extraUnlocks = GetCountHideDescriptionAndExtraUnlocks( item );
 
 	local uiNode:table = nil;
 	if numUnlocks <= 8 or isForcedSmall then
@@ -807,10 +832,10 @@ function AllocateNode( item:table, isForcedSmall:boolean )
 		uiNode = m_kLargeNodeIM:GetInstance();
 		uiNode.IsLarge = true;
 	end
-	
+
 	uiNode.Top:SetTag( item.Hash );	-- Set the hash of the civic to the tag of the node (for tutorial to be able to callout)
 
-	-- Add data fields to UI component		
+	-- Add data fields to UI component
 	uiNode.Type	= item.Type;	-- Dynamically add "Type" field to UI node for quick look ups in item data table.
 
 	if uiNode["unlockIM"] == nil then
@@ -818,7 +843,7 @@ function AllocateNode( item:table, isForcedSmall:boolean )
 	else
 		uiNode["unlockIM"]:ResetInstances();
 	end
-		
+
 	if uiNode["unlockGOV"] == nil then
 		uiNode["unlockGOV"] = InstanceManager:new( "GovernmentIcon", "GovernmentInstanceGrid", uiNode.UnlockStack );
 	else
@@ -826,9 +851,11 @@ function AllocateNode( item:table, isForcedSmall:boolean )
 	end
 
 	item.Callback = function()
-		SetCurrentNode(item.Hash);
+    if IsAPCivic(item.Type) then
+      SetCurrentNode(item.Hash);
+    end
 	end
-			
+
 	local playerId	:number = Game.GetLocalPlayer();
 	local civic		:table = GameInfo.Civics[item.Type];
 	PopulateUnlockablesForCivic( playerId, civic.Index, uiNode["unlockIM"], uiNode["unlockGOV"], item.Callback, hideDescriptionIcon);
@@ -838,8 +865,8 @@ function AllocateNode( item:table, isForcedSmall:boolean )
 		tUnlock.IconData:Initialize(uiNode.UnlockStack, tUnlock.ModifierTable);
 	end
 
-	uiNode.NodeButton:RegisterCallback( Mouse.eLClick, item.Callback);
-	uiNode.OtherStates:RegisterCallback( Mouse.eLClick, item.Callback);
+  uiNode.NodeButton:RegisterCallback( Mouse.eLClick, item.Callback);
+  uiNode.OtherStates:RegisterCallback( Mouse.eLClick, item.Callback);
 
 	return uiNode;
 end
@@ -850,36 +877,36 @@ end
 --	Callback when the main scroll panel is scrolled.
 -- ===========================================================================
 function OnScroll( control:table, percent:number )
-	
-	-- Parallax 
+
+	-- Parallax
 	Controls.ArtScroller:SetScrollValue( percent );
 	Controls.LineScroller:SetScrollValue( percent );
 	Controls.EraArtScroller:SetScrollValue( percent );
-	
+
 	-- Audio
-	if percent==0 or percent==1.0 then 
+	if percent==0 or percent==1.0 then
         if m_lastPercent == percent then
             return;
         end
-		UI.PlaySound("UI_TechTree_ScrollTick_End"); 
-	else 
-		UI.PlaySound("UI_TechTree_ScrollTick"); 
-	end 
+		UI.PlaySound("UI_TechTree_ScrollTick_End");
+	else
+		UI.PlaySound("UI_TechTree_ScrollTick");
+	end
 
-    m_lastPercent = percent; 
+    m_lastPercent = percent;
 end
 
 -- ===========================================================================
 function GetLargeNodeFromSmall( item:table, uiNode:table )
-	item.wasForcedSmall = false;		
+	item.wasForcedSmall = false;
 	local isForcedSmall:boolean = false;
 	local uiLargeNode :table = AllocateNode( item, isForcedSmall );
 	uiLargeNode.x = uiNode.x;
-	uiLargeNode.y = uiNode.y;		
+	uiLargeNode.y = uiNode.y;
 	uiLargeNode.Top:SetOffsetVal( uiLargeNode.x, uiLargeNode.y + VERTICAL_CENTER);	-- Add back vertical center.
-	g_uiNodes[item.Type] = uiLargeNode;		
+	g_uiNodes[item.Type] = uiLargeNode;
 	m_kNodeIM:ReleaseInstance( uiNode );	-- Clear old instances
-	
+
 	return uiLargeNode;
 end
 
@@ -892,8 +919,8 @@ function PopulateNode(uiNode, playerTechData)
 	local live		:table = playerTechData[DATA_FIELD_LIVEDATA][uiNode.Type];	-- live (changing) data
 	local status	:number = live.IsRevealed and live.Status or ITEM_STATUS.UNREVEALED;
 
-	-- Check if a node just changed status to reveled and needs to be reallocated to a different shape.	
-	if (status ~= ITEM_STATUS.UNREVEALED) and item.wasForcedSmall then		
+	-- Check if a node just changed status to reveled and needs to be reallocated to a different shape.
+	if (status ~= ITEM_STATUS.UNREVEALED) and item.wasForcedSmall then
 		uiNode = GetLargeNodeFromSmall( item, uiNode );
 	end
 
@@ -914,7 +941,7 @@ function PopulateNode(uiNode, playerTechData)
 						if( lineNum == 3) then
 							line:SetTexture("Controls_TreePathNS");
 						end
-	
+
 						if(lineNum==2)then
 							if previousRow < item.UITreeRow  then
 								line:SetTexture("Controls_TreePathSE");
@@ -1081,8 +1108,8 @@ function PopulateNode(uiNode, playerTechData)
 end
 
 -- ===========================================================================
---	Display the state of the tree (filter, node display, etc...) based on the 
---	active player's item data. 
+--	Display the state of the tree (filter, node display, etc...) based on the
+--	active player's item data.
 --	Viewxx
 -- ===========================================================================
 function View( playerTechData:table )
@@ -1104,17 +1131,17 @@ function View( playerTechData:table )
 			local instance	:table	= m_kMarkerIM:GetInstance();
 
 			if markerStat.IsPlayerHere then
-				-- Representing the player viewing the tree			
+				-- Representing the player viewing the tree
 				instance.Portrait:SetHide( true );
 				instance.TurnGrid:SetHide( false );
 				instance.TurnLabel:SetText( Locale.Lookup("LOC_TECH_TREE_TURN_NUM" ));
 				instance.TurnNumber:SetText( tostring(Game.GetCurrentGameTurn()) );
-				local turnLabelWidth = PADDING + instance.TurnLabel:GetSizeX() +  instance.TurnNumber:GetSizeX(); 
+				local turnLabelWidth = PADDING + instance.TurnLabel:GetSizeX() +  instance.TurnNumber:GetSizeX();
 				instance.TurnGrid:SetSizeX( turnLabelWidth );
 				instance.Marker:SetTexture( PIC_MARKER_PLAYER );
 				instance.Marker:SetSizeVal( SIZE_MARKER_PLAYER_X, SIZE_MARKER_PLAYER_Y );
 			else
-				-- An other player				
+				-- An other player
 				instance.TurnGrid:SetHide( true );
 				instance.Marker:SetTexture( PIC_MARKER_OTHER );
 				instance.Marker:SetSizeVal( SIZE_MARKER_OTHER_X, SIZE_MARKER_OTHER_Y );
@@ -1129,7 +1156,7 @@ function View( playerTechData:table )
 			local tooltipString				:string = Locale.Lookup("LOC_TREE_ERA", Locale.Lookup(higestEraName) ).."[NEWLINE]";
 			local numOfPlayersAtThisColumn	:number = table.count(markerStat.PlayerNums);
 			if numOfPlayersAtThisColumn < 2 then
-				instance.Num:SetHide( true );			
+				instance.Num:SetHide( true );
 				local playerNum		:number = markerStat.PlayerNums[1];
 				local pPlayerConfig :table = PlayerConfigurations[playerNum];
 				tooltipString = tooltipString.. Locale.Lookup(pPlayerConfig:GetPlayerName());	-- TODO: Temporary using player name until leaderame is fixed
@@ -1153,7 +1180,7 @@ function View( playerTechData:table )
 						local isHuman = pPlayerConfig:IsHuman();
 						print("debug info:",name,nick,leader,civ,isHuman);
 					]]
-					--tooltipString = tooltipString.. Locale.Lookup(pPlayerConfig:GetLeaderName()); 
+					--tooltipString = tooltipString.. Locale.Lookup(pPlayerConfig:GetLeaderName());
 					tooltipString = tooltipString.. Locale.Lookup(pPlayerConfig:GetPlayerName());	-- TODO:: Temporary using player name until leaderame is fixed
 					if i < numOfPlayersAtThisColumn then
 						tooltipString = tooltipString.."[NEWLINE]";
@@ -1161,14 +1188,14 @@ function View( playerTechData:table )
 				end
 			end
 			instance.Marker:SetToolTipString( tooltipString );
-		
+
 			local MARKER_OFFSET_START:number = 20;
 			local markerPercent :number = math.clamp( markerStat.HighestColumn / m_maxColumns, 0, 1 );
 			local markerX		:number = MARKER_OFFSET_START + (markerPercent * m_scrollWidth );
 			instance.Top:SetOffsetVal(markerX ,0);
 		end
 	end
-	
+
 	RealizePathMarkers();
 	RealizeFilterPulldown();
 	RealizeKeyPanel();
@@ -1187,7 +1214,7 @@ function GetPlayerGovernment(ePlayer:number)
 	local governmentId :number = playerCulture:GetCurrentGovernment();
 	if governmentId ~= -1 then
 		kCurrentGovernment = GameInfo.Governments[governmentId];
-		kGovernmentInfo["NAMES"] = Locale.Lookup(kCurrentGovernment.Name);	
+		kGovernmentInfo["NAMES"] = Locale.Lookup(kCurrentGovernment.Name);
 	end
 
 	kGovernmentInfo["DIPLOMATIC"] = 0;
@@ -1203,23 +1230,23 @@ function GetPlayerGovernment(ePlayer:number)
 	for i = 0, numSlots-1, 1 do
 		local	iSlotType	:number = playerCulture:GetSlotType(i);
 		local	iSlotPolicy	:number= playerCulture:GetSlotPolicy(i);
-		local	rowSlotType	:string = GameInfo.GovernmentSlots[iSlotType].GovernmentSlotType;				
-				
-		if	rowSlotType == "SLOT_DIPLOMATIC" then	
+		local	rowSlotType	:string = GameInfo.GovernmentSlots[iSlotType].GovernmentSlotType;
+
+		if	rowSlotType == "SLOT_DIPLOMATIC" then
 			kGovernmentInfo["DIPLOMATIC"] = kGovernmentInfo["DIPLOMATIC"]+1;
 			table.insert(kGovernmentInfo["DIPLOMATICPOLICIES"], iSlotPolicy);
-		elseif	rowSlotType == "SLOT_ECONOMIC"	then	
+		elseif	rowSlotType == "SLOT_ECONOMIC"	then
 			kGovernmentInfo["ECONOMIC"] = kGovernmentInfo["ECONOMIC"]+1;
 			table.insert(kGovernmentInfo["ECONOMICPOLICIES"], iSlotPolicy);
-		elseif	rowSlotType == "SLOT_MILITARY"	then	
+		elseif	rowSlotType == "SLOT_MILITARY"	then
 			kGovernmentInfo["MILITARY"] = kGovernmentInfo["MILITARY"]+1;
 			table.insert(kGovernmentInfo["MILITARYPOLICIES"], iSlotPolicy);
-		elseif	rowSlotType == "SLOT_WILDCARD"	then	
+		elseif	rowSlotType == "SLOT_WILDCARD"	then
 			kGovernmentInfo["WILDCARD"] = kGovernmentInfo["WILDCARD"]+1;
 			table.insert(kGovernmentInfo["WILDCARDPOLICIES"], iSlotPolicy);
 		else
 			UI.DataError("On initialization; unhandled slot type for a policy '"..rowSlotType.."'");
-		end		
+		end
 	end
 
 	return kGovernmentInfo;
@@ -1229,9 +1256,9 @@ end
 --	Load all the 'live' data for a player.
 -- ===========================================================================
 function GetCurrentData( ePlayer:number )
-	
+
 	-- If first time, initialize player data tables.
-	local data	:table = m_kAllPlayersTechData[ePlayer];	
+	local data	:table = m_kAllPlayersTechData[ePlayer];
 	if data == nil then
 		-- Initialize player's top level tables:
 		data = {};
@@ -1239,12 +1266,12 @@ function GetCurrentData( ePlayer:number )
 		data[DATA_FIELD_PLAYERINFO]			= {};
 		data[DATA_FIELD_UIOPTIONS]			= {};
 		data[DATA_FIELD_GOVERNMENT]			= {};
-		
+
 		-- Initialize data, and sub tables within the top tables.
 		data[DATA_FIELD_PLAYERINFO].Player	= ePlayer;	-- Number of this player
 		data[DATA_FIELD_PLAYERINFO].Markers	= {};		-- Hold a condenced, UI-ready version of stats
 		data[DATA_FIELD_PLAYERINFO].Stats	= {};		-- Hold stats on where each player is (based on what this player can see)
-	end	
+	end
 
 	local kPlayer		:table	= Players[ePlayer];
 	local playerCulture	:table	= kPlayer:GetCulture();
@@ -1325,7 +1352,7 @@ function GetCurrentData( ePlayer:number )
 			local currentCivic	:number = playerCulture:GetProgressingCivic();
 
 			data[DATA_FIELD_PLAYERINFO].Stats[playerID] = {
-				CurrentID		= currentCivic,	
+				CurrentID		= currentCivic,
 				HasMet			= kPlayer:GetDiplomacy():HasMet(playerID) or playerID==ePlayer or debugShowAllMarkers;
 				HighestColumn	= -1,				-- where they are in the timeline
 				HighestEra		= ""
@@ -1369,31 +1396,31 @@ function GetCurrentData( ePlayer:number )
 				markerData = {
 							HighestColumn	= targetPlayer.HighestColumn,	-- Which column this marker should be placed
 							HighestEra		= targetPlayer.HighestEra,
-							IsPlayerHere	= (playerID == ePlayer),				
+							IsPlayerHere	= (playerID == ePlayer),
 							PlayerNums		= {playerID}}									-- All players who share this marker spot
-				table.insert( data[DATA_FIELD_PLAYERINFO].Markers, markerData );				
+				table.insert( data[DATA_FIELD_PLAYERINFO].Markers, markerData );
 			end
 			-- SPECIAL CASE: Current player starts at column 0 so it's immediately visible on timeline:
 			if playerID == ePlayer and markerData.HighestColumn == -1 then
-				markerData.HighestColumn = 0;		
+				markerData.HighestColumn = 0;
 				local firstEra:table = nil;
 				for _,era in pairs(g_kEras) do
 					if firstEra == nil or era.Index < firstEra.Index then
 						firstEra = era;
 					end
-				end						
+				end
 				if firstEra ~= nil then
 					markerData.HighestEra = firstEra.Index;
 				end
 			end
 
 			-- Traverse all the IDs and merge them with this one.
-			for anotherID:number, anotherPlayer:table in pairs(data[DATA_FIELD_PLAYERINFO].Stats) do				
+			for anotherID:number, anotherPlayer:table in pairs(data[DATA_FIELD_PLAYERINFO].Stats) do
 				-- Don't add if: it's outself, if hasn't researched at least 1 tech, if we haven't met
-				if playerID ~= anotherID and anotherPlayer.HighestColumn > -1 and anotherPlayer.HasMet then		
+				if playerID ~= anotherID and anotherPlayer.HighestColumn > -1 and anotherPlayer.HasMet then
 					if markerData.HighestColumn == data[DATA_FIELD_PLAYERINFO].Stats[anotherID].HighestColumn then
 						checkedID[anotherID] = true;
-						-- Need to do this check if player's ID didn't show up first in the list in creating the marker.						
+						-- Need to do this check if player's ID didn't show up first in the list in creating the marker.
 						if anotherID == ePlayer then
 							markerData.IsPlayerHere	= true;
 						end
@@ -1415,7 +1442,7 @@ function GetCurrentData( ePlayer:number )
 	end
 
 	data[DATA_FIELD_GOVERNMENT]	= GetPlayerGovernment(ePlayer);
-	
+
 	-- Loop through all items and add an IsRevealed field.
 	local pPlayerCultureManager:table = Players[ePlayer]:GetCulture();
 	if (pPlayerCultureManager ~= nil) then
@@ -1436,14 +1463,14 @@ function RefreshDataIfNeeded( ePlayer:number )
 	if ContextPtr:IsHidden() then return; end													-- Screen hidden
 	if (m_ePlayer == PlayerTypes.NONE or m_ePlayer == PlayerTypes.OBSERVER) then return; end	-- Autoplay support.
 	if m_ePlayer ~= ePlayer then return; end													-- Some other player
-			
+
 	m_kCurrentData = GetCurrentData( m_ePlayer, -1 );
 	View( m_kCurrentData );
 end
 
 -- ===========================================================================
 function OnUpdateDueToCity(ePlayer:number, cityID:number, plotX:number, plotY:number)
-	RefreshDataIfNeeded(ePlayer);	
+	RefreshDataIfNeeded(ePlayer);
 end
 
 -- ===========================================================================
@@ -1498,7 +1525,7 @@ end
 
 -- ===========================================================================
 function OnCivicChanged( ePlayer:number, eCivic:number )
-	RefreshDataIfNeeded( ePlayer );	
+	RefreshDataIfNeeded( ePlayer );
 end
 
 -- ===========================================================================
@@ -1507,7 +1534,7 @@ function OnCivicComplete( ePlayer:number, eCivic:number)
 end
 
 -- ===========================================================================
---	Initially size static UI elements 
+--	Initially size static UI elements
 --	(or re-size if screen resolution changed)
 -- ===========================================================================
 function Resize()
@@ -1518,27 +1545,27 @@ function Resize()
 	-- First obtain the size of the tree by taking the visible size and multiplying it by the ratio of the full content
 	local scrollPanelX:number = (Controls.NodeScroller:GetSizeX() / Controls.NodeScroller:GetRatio());
 
-	local artAndEraScrollWidth:number = math.max( scrollPanelX * (1/PARALLAX_SPEED), m_width ) 
-		+ SIZE_ART_ERA_OFFSET_X 
+	local artAndEraScrollWidth:number = math.max( scrollPanelX * (1/PARALLAX_SPEED), m_width )
+		+ SIZE_ART_ERA_OFFSET_X
 		+ SIZE_ART_ERA_START_X;
 
 	Controls.ArtParchmentDecoTop:SetSizeX( artAndEraScrollWidth );
 	Controls.ArtParchmentDecoBottom:SetSizeX( artAndEraScrollWidth );
 	Controls.ArtParchmentRippleTop:SetSizeX( artAndEraScrollWidth );
 	Controls.ArtParchmentRippleBottom:SetSizeX( artAndEraScrollWidth );
-	Controls.ForceSizeX:SetSizeX( artAndEraScrollWidth  );	
+	Controls.ForceSizeX:SetSizeX( artAndEraScrollWidth  );
 	Controls.ForceArtSizeX:SetSizeX( scrollPanelX * (1/PARALLAX_ART_SPEED) );
 	Controls.LineForceSizeX:SetSizeX( scrollPanelX );
 	Controls.LineScroller:CalculateSize();
 	Controls.ArtScroller:CalculateSize();
-	
+
 	local backArtScrollWidth:number = scrollPanelX * (1/PARALLAX_ART_SPEED) + 100;
 	Controls.Background:SetSizeX( math.max(backArtScrollWidth, m_width) );
-	Controls.Background:SetSizeY( SIZE_WIDESCREEN_HEIGHT - (SIZE_TIMELINE_AREA_Y - 8) );	
+	Controls.Background:SetSizeY( SIZE_WIDESCREEN_HEIGHT - (SIZE_TIMELINE_AREA_Y - 8) );
 	Controls.EraArtScroller:CalculateSize();
 
 	local keyHeight:number = SIZE_WIDESCREEN_HEIGHT - (SIZE_OPTIONS_Y + SIZE_TIMELINE_AREA_Y + SIZE_TOP_AREA_Y);
-	if not Controls.GovernmentPanel:IsHidden() then 
+	if not Controls.GovernmentPanel:IsHidden() then
 		keyHeight = keyHeight - SIZE_GOVTPANEL_HEIGHT;
 	end
 	Controls.KeyPanel:SetSizeY(keyHeight);
@@ -1579,66 +1606,70 @@ function PopulateItemData() -- Note that we are overriding this function without
 	local tCivicModCache:table = TechAndCivicSupport_BuildCivicModifierCache();
 
 	local civicNodes:table = UITree.GetAvailableCivics();
-	for _,civicNode in ipairs(civicNodes) do
+	-- for _,civicNode in ipairs(civicNodes) do
+	for row in GameInfo.Civics() do
+    if ShouldShowCivic(row.CivicType) then
+      -- for key, value in pairs(row) do
+      --     print(key, value)
+      -- end
+      -- print("_____________")
 
-		local row:table		= GameInfo.Civics[civicNode.CivicType];
+      local kEntry:table	= {};
+      kEntry.Type			= row.CivicType;
+      kEntry.Name			= row.Name;
+      kEntry.BoostText	= "";
+      kEntry.Column		= -1;
+      kEntry.Cost			= row.Cost;
+      kEntry.Description	= row.Description and Locale.Lookup( row.Description );
+      kEntry.EraType		= row.EraType;
+      kEntry.Hash			= GetHash(kEntry.Type);
+      kEntry.Index		= row.CivicType;
+      kEntry.IsBoostable	= false;
+      kEntry.IsRevealed	= false;
+      kEntry.Prereqs		= {};				-- IDs for prerequisite item(s)
+      kEntry.UITreeRow	= row.UITreeRow;
+      kEntry.Unlocks		= {};				-- Each unlock has: unlockType, iconUnavail, iconAvail, tooltip
 
-		local kEntry:table	= {};
-		kEntry.Type			= row.CivicType;
-		kEntry.Name			= row.Name;
-		kEntry.BoostText	= "";
-		kEntry.Column		= -1;
-		kEntry.Cost			= civicNode.Cost;
-		kEntry.Description	= row.Description and Locale.Lookup( row.Description );
-		kEntry.EraType		= row.EraType;
-		kEntry.Hash			= GetHash(kEntry.Type);
-		kEntry.Index		= civicNode.CivicType;
-		kEntry.IsBoostable	= false;
-		kEntry.IsRevealed	= false;
-		kEntry.Prereqs		= {};				-- IDs for prerequisite item(s)
-		kEntry.UITreeRow	= civicNode.TreeRow;
-		kEntry.Unlocks		= {};				-- Each unlock has: unlockType, iconUnavail, iconAvail, tooltip
+      -- Only add if not debugging or in debug range.
+      if	(table.count(debugExplicitList) == 0 and debugFilterEraMaxIndex ==-1 ) or
+        (table.count(debugExplicitList) == 0 and kEntry.Index < debugFilterEraMaxIndex) or
+        (table.count(debugExplicitList) ~= 0 and debugExplicitList[kEntry.Index] ~= nil)  then
 
-		-- Only add if not debugging or in debug range.
-		if	(table.count(debugExplicitList) == 0 and debugFilterEraMaxIndex ==-1 ) or
-			(table.count(debugExplicitList) == 0 and kEntry.Index < debugFilterEraMaxIndex) or
-			(table.count(debugExplicitList) ~= 0 and debugExplicitList[kEntry.Index] ~= nil)  then
+        kEntry.ModifierList = tCivicModCache[kEntry.Type];
 
-			kEntry.ModifierList = tCivicModCache[kEntry.Type];
+        -- Boost?
+        for boostRow in GameInfo.Boosts() do
+          if boostRow.CivicType == kEntry.Type then
+            kEntry.BoostText = Locale.Lookup( boostRow.TriggerDescription );
+            kEntry.IsBoostable = true;
+            kEntry.BoostAmount = boostRow.Boost;
+            break;
+          end
+        end
 
-			-- Boost?
-			for boostRow in GameInfo.Boosts() do
-				if boostRow.CivicType == kEntry.Type then
-					kEntry.BoostText = Locale.Lookup( boostRow.TriggerDescription );
-					kEntry.IsBoostable = true;
-					kEntry.BoostAmount = boostRow.Boost;
-					break;
-				end
-			end
+        if (table.count(row.PrereqCivicCollection) > 0) then
+          for __, subRow in ipairs( row.PrereqCivicCollection) do
+            local prereqRow:table = GameInfo.Civics[subRow.PrereqCivic];
+            table.insert( kEntry.Prereqs, prereqRow.CivicType );
+          end
+        end
 
-			if (table.count(civicNode.PrereqCivicTypes) > 0) then
-				for __,prereqCivicType in ipairs(civicNode.PrereqCivicTypes) do
-					local prereqRow:table = GameInfo.Civics[prereqCivicType];
-					if prereqRow ~= nil then
-						table.insert( kEntry.Prereqs, prereqRow.CivicType );
-					end
-				end
-			end
-			-- If no prereqs were found, set item to special tree start value
-			if table.count(kEntry.Prereqs) == 0 then
-				table.insert(kEntry.Prereqs, PREREQ_ID_TREE_START);
-			end
+        -- If no prereqs were found, set item to special tree start value
+        if table.count(kEntry.Prereqs) == 0 then
+          table.insert(kEntry.Prereqs, PREREQ_ID_TREE_START);
+        end
 
-			-- Warn if DB has an out of bounds entry.
-			if kEntry.UITreeRow < ROW_MIN or kEntry.UITreeRow > ROW_MAX then
-				UI.DataError("UITreeRow for '"..kEntry.Type.."' has an out of bound UITreeRow="..tostring(kEntry.UITreeRow).."  MIN="..tostring(ROW_MIN).."  MAX="..tostring(ROW_MAX));
-			end
+        -- Warn if DB has an out of bounds entry.
+        if kEntry.UITreeRow < ROW_MIN or kEntry.UITreeRow > ROW_MAX then
+          UI.DataError("UITreeRow for '"..kEntry.Type.."' has an out of bound UITreeRow="..tostring(kEntry.UITreeRow).."  MIN="..tostring(ROW_MIN).."  MAX="..tostring(ROW_MAX));
+        end
 
-			AddCivicToEra( kEntry );
+        AddCivicToEra( kEntry );
 
-			-- Save entry into master list.
-			kItemDefaults[kEntry.Type] = kEntry;
-		end
+        -- Save entry into master list.
+        kItemDefaults[kEntry.Type] = kEntry;
+      end
+    end
 	end
 
 	return kItemDefaults;
@@ -1651,26 +1682,26 @@ end
 function PopulateEraData()
 	g_kEras = {};
 	for row:table in GameInfo.Eras() do
-		if m_kEraCounter[row.EraType] and m_kEraCounter[row.EraType] > 0 and debugFilterEraMaxIndex < 1 or row.ChronologyIndex <= debugFilterEraMaxIndex then			
-			table.insert(g_kEras, { 
+		if m_kEraCounter[row.EraType] and m_kEraCounter[row.EraType] > 0 and debugFilterEraMaxIndex < 1 or row.ChronologyIndex <= debugFilterEraMaxIndex then
+			table.insert(g_kEras, {
 				EraType				= row.EraType,
 				BGTexture			= row.EraCivicBackgroundTexture,
 				BGTextureOffsetX	= row.EraCivicBackgroundTextureOffsetX,
 				Description			= Locale.Lookup(row.Name),
-				NumColumns			= 0,				
+				NumColumns			= 0,
 				ChronologyIndex		= row.ChronologyIndex,
 				Index				= -1,
 				PriorColumns		= -1
 			});
 		end
-	end	
+	end
 
 	-- Correctly assign the index to be the index of the era sorted by chronology index.
 	-- Also index
 	table.sort(g_kEras, function(a,b) return a.ChronologyIndex < b.ChronologyIndex; end);
 	for i,v in ipairs(g_kEras) do
 		v.Index = i - 1;
-		g_kEras[v.EraType] = v;		
+		g_kEras[v.EraType] = v;
 	end
 end
 
@@ -1683,20 +1714,20 @@ function PopulateFilterData()
 	-- Filters.
 	m_kFilters = {};
 	table.insert( m_kFilters, { Func=nil,										Description="LOC_TECH_FILTER_NONE",			Icon=nil } );
-	
+
 	table.insert( m_kFilters, { Func=g_TechFilters["TECHFILTER_FOOD"],			Description="LOC_TECH_FILTER_FOOD",			Icon="[ICON_FOOD]" });
 	table.insert( m_kFilters, { Func=g_TechFilters["TECHFILTER_SCIENCE"],		Description="LOC_TECH_FILTER_SCIENCE",		Icon="[ICON_SCIENCE]" });
 	table.insert( m_kFilters, { Func=g_TechFilters["TECHFILTER_PRODUCTION"],	Description="LOC_TECH_FILTER_PRODUCTION",	Icon="[ICON_PRODUCTION]" });
 	table.insert( m_kFilters, { Func=g_TechFilters["TECHFILTER_CULTURE"],		Description="LOC_TECH_FILTER_CULTURE",		Icon="[ICON_CULTURE]" });
-	table.insert( m_kFilters, { Func=g_TechFilters["TECHFILTER_GOLD"],			Description="LOC_TECH_FILTER_GOLD",			Icon="[ICON_GOLD]" });	
+	table.insert( m_kFilters, { Func=g_TechFilters["TECHFILTER_GOLD"],			Description="LOC_TECH_FILTER_GOLD",			Icon="[ICON_GOLD]" });
 	table.insert( m_kFilters, { Func=g_TechFilters["TECHFILTER_UNITS"],			Description="LOC_TECH_FILTER_UNITS",		Icon="[ICON_UNITS]" });
 	table.insert( m_kFilters, { Func=g_TechFilters["TECHFILTER_IMPROVEMENTS"],	Description="LOC_TECH_FILTER_IMPROVEMENTS",	Icon="[ICON_IMPROVEMENTS]" });
 	table.insert( m_kFilters, { Func=g_TechFilters["TECHFILTER_WONDERS"],		Description="LOC_TECH_FILTER_WONDERS",		Icon="[ICON_WONDERS]" });
-	
-	for i,filter in ipairs(m_kFilters) do		
+
+	for i,filter in ipairs(m_kFilters) do
 		local filterLabel	 = Locale.Lookup( filter.Description );
 		local filterIconText = filter.Icon;
-		local controlTable	 = {};       
+		local controlTable	 = {};
 		Controls.FilterPulldown:BuildEntry( "FilterItemInstance", controlTable );
 		-- If a text icon exists, use it and bump the label in the button over.
 		--[[ TODO: Uncomment if icons are added.
@@ -1723,7 +1754,7 @@ end
 function PopulateSearchData()
 	local searchContext = "Civics";
 	if(Search.CreateContext(searchContext, "[COLOR_LIGHTBLUE]", "[ENDCOLOR]", "...")) then
-			
+
 		-- Hash modifier types that grant envoys or spies.
 		local envoyModifierTypes = {};
 		local spyModifierTypes = {};
@@ -1740,7 +1771,7 @@ function PopulateSearchData()
 		-- Hash civic types that grant envoys or spies via modifiers.
 		local envoyCivics = {};
 		local spyCivics = {};
-		for row in GameInfo.CivicModifiers() do			
+		for row in GameInfo.CivicModifiers() do
 			local modifier = GameInfo.Modifiers[row.ModifierId];
 			if(modifier) then
 				local modifierType = modifier.ModifierType;
@@ -1798,7 +1829,7 @@ function PopulateSearchData()
 				Search.AddData(searchContext, row.PrereqCivic, Locale.Lookup(GameInfo.Civics[row.PrereqCivic].Name), Locale.Lookup(row.Name), { governmentTypeName });
 			end
 		end
-		
+
 		local improvementTypeName = Locale.Lookup("LOC_IMPROVEMENT_NAME");
 		for row in GameInfo.Improvements() do
 			if(row.PrereqCivic) then
@@ -1812,7 +1843,7 @@ function PopulateSearchData()
 				Search.AddData(searchContext, row.PrereqCivic, Locale.Lookup(GameInfo.Civics[row.PrereqCivic].Name), Locale.Lookup(row.Name), { policyTypeName });
 			end
 		end
-		
+
 		local projectTypeName = Locale.Lookup("LOC_PROJECT_NAME");
 		for row in GameInfo.Projects() do
 			if(row.PrereqCivic) then
@@ -1842,7 +1873,7 @@ end
 -- Update the Filter text with the current label.
 -- ===========================================================================
 function RealizeFilterPulldown()
-	local pullDownButton = Controls.FilterPulldown:GetButton();	
+	local pullDownButton = Controls.FilterPulldown:GetButton();
 	if m_kCurrentData[DATA_FIELD_UIOPTIONS].filter == nil or m_kCurrentData[DATA_FIELD_UIOPTIONS].filter.Func== nil then
 		pullDownButton:SetText( "  "..Locale.Lookup("LOC_TREE_FILTER_W_DOTS"));
 	else
@@ -1856,7 +1887,7 @@ end
 --	filterFunc,		The funciton filter to apply to each node as it's built,
 --					nil will reset the filters to none.
 -- ===========================================================================
-function OnFilterClicked( filter )		  
+function OnFilterClicked( filter )
 	m_kCurrentData[DATA_FIELD_UIOPTIONS].filter = filter;
 	View( m_kCurrentData )
 end
@@ -1881,7 +1912,7 @@ function OnOpen()
 	-- From Civ6_styles: FullScreenVignetteConsumer
 	Controls.ScreenAnimIn:SetToBeginning();
 	Controls.ScreenAnimIn:Play();
-	
+
 	LuaEvents.CivicsTree_OpenCivicsTree();
 end
 
@@ -1890,8 +1921,8 @@ end
 -- ===========================================================================
 function RealizeKeyPanel()
 	if UserConfiguration.GetShowCivicsTreeKey() then
-		Controls.KeyPanel:SetHide( false );	
-		UI.PlaySound("UI_TechTree_Filter_Open");	        
+		Controls.KeyPanel:SetHide( false );
+		UI.PlaySound("UI_TechTree_Filter_Open");
 	else
 		if Controls.KeyPanel:IsHidden() then
 			UI.PlaySound("UI_TechTree_Filter_Closed");
@@ -1899,13 +1930,13 @@ function RealizeKeyPanel()
 		Controls.KeyPanel:SetHide( true );
 	end
 
-	if Controls.KeyPanel:IsHidden() then
-		Controls.ToggleKeyButton:SetText(Locale.Lookup("LOC_TREE_SHOW_KEY"));
-		Controls.ToggleKeyButton:SetSelected(false);
-	else
-		Controls.ToggleKeyButton:SetText(Locale.Lookup("LOC_TREE_HIDE_KEY"));
-		Controls.ToggleKeyButton:SetSelected(true);	
-	end	
+	-- if Controls.KeyPanel:IsHidden() then
+	-- 	Controls.ToggleKeyButton:SetText(Locale.Lookup("LOC_TREE_SHOW_KEY"));
+	-- 	Controls.ToggleKeyButton:SetSelected(false);
+	-- else
+	-- 	Controls.ToggleKeyButton:SetText(Locale.Lookup("LOC_TREE_HIDE_KEY"));
+	-- 	Controls.ToggleKeyButton:SetSelected(true);
+	-- end
 end
 
 -- ===========================================================================
@@ -1921,7 +1952,7 @@ function OnClickCurrentPolicy(clickedPolicy:number)
 		percent = percent;
 	elseif percent >= .5 and percent < .75 then
 		percent = percent + .025;
-	elseif percent >= .75 then 
+	elseif percent >= .75 then
 		percent = percent + .05;
 	end
 
@@ -1939,8 +1970,8 @@ function RealizeGovernmentPanel()
 	m_kWildcardPolicyIM:DestroyInstances();
 
 	if UserConfiguration.GetShowCivicsTreeGovernment() then
-		Controls.GovernmentPanel:SetHide( false );	
-		UI.PlaySound("UI_TechTree_Filter_Open");		
+		Controls.GovernmentPanel:SetHide( false );
+		UI.PlaySound("UI_TechTree_Filter_Open");
 	else
 		if Controls.GovernmentPanel:IsHidden() then
 			UI.PlaySound("UI_TechTree_Filter_Closed");
@@ -1954,7 +1985,7 @@ function RealizeGovernmentPanel()
 	else
 		Controls.ToggleGovernmentButton:SetText(Locale.Lookup("LOC_TREE_HIDE_GOVERNMENT"));
 		Controls.ToggleGovernmentButton:SetSelected(true);
-	end	
+	end
 
 	TruncateStringWithTooltip( Controls.GovernmentTitle, MAX_BEFORE_TRUNC_GOV_TITLE, Locale.ToUpper(m_kCurrentData[DATA_FIELD_GOVERNMENT]["NAMES"]));
 	Controls.DiplomaticIconCount:SetText(tostring(m_kCurrentData[DATA_FIELD_GOVERNMENT]["DIPLOMATIC"]));
@@ -2044,15 +2075,15 @@ function PopulateStaticData()
 		local slotType			:string = row.GovernmentSlotType;
 		local description		:string = Locale.Lookup(row.Description);
 		--local draftCost			:number = kPlayerCulture:GetEnactPolicyCost(policyTypeHash);	--Move to live data
-	
-		m_kPolicyCatalogData[row.Name] = {			
-			Description = description, 
-			Name		= policyName, 
-			PolicyHash	= policyTypeHash, 
+
+		m_kPolicyCatalogData[row.Name] = {
+			Description = description,
+			Name		= policyName,
+			PolicyHash	= policyTypeHash,
 			SlotType	= slotType,			-- SLOT_MILITARY, SLOT_ECONOMIC, SLOT_DIPLOMATIC, SLOT_WILDCARD, (SLOT_GREAT_PERSON)
 			UniqueID	= row.Index			-- the row this policy exists in, is guaranteed to be unique (as-is the house, but these are readable. ;) )
 			};
-	end	
+	end
 
 	-- Fill in governments
 	m_kGovernments = {};
@@ -2096,21 +2127,31 @@ end
 -- ===========================================================================
 function OnClickToggleKey()
 	if Controls.KeyPanel:IsHidden() then
-		UserConfiguration.SetShowCivicsTreeKey(true);		
+		UserConfiguration.SetShowCivicsTreeKey(true);
 	else
         UI.PlaySound("UI_TechTree_Filter_Closed");
-		UserConfiguration.SetShowCivicsTreeKey(false);		
+		UserConfiguration.SetShowCivicsTreeKey(false);
 	end
 	RealizeKeyPanel();
 end
-Controls.ToggleKeyButton:RegisterCallback(Mouse.eLClick, OnClickToggleKey);
+
+-- AP:
+function OnClickToggleArchipelagoTree()
+    if SHOW_ARCHIPELAGO_TREE then
+        SHOW_ARCHIPELAGO_TREE = false;
+    else
+        SHOW_ARCHIPELAGO_TREE = true;
+    end
+    OnInit(true)
+end
+Controls.ToggleTreeButton:RegisterCallback(Mouse.eLClick, OnClickToggleArchipelagoTree);
 
 function OnClickToggleGovernment()
 	if Controls.GovernmentPanel:IsHidden() then
-		UserConfiguration.SetShowCivicsTreeGovernment(true);		
+		UserConfiguration.SetShowCivicsTreeGovernment(true);
 	else
         UI.PlaySound("UI_TechTree_Filter_Closed");
-		UserConfiguration.SetShowCivicsTreeGovernment(false);		
+		UserConfiguration.SetShowCivicsTreeGovernment(false);
 	end
 	RealizeGovernmentPanel();
 end
@@ -2121,7 +2162,7 @@ function OnClickToggleFilter()
         UI.PlaySound("UI_TechTree_Filter_Open");
     else
         UI.PlaySound("UI_TechTree_Filter_Closed");
-    end             
+    end
 end
 
 -- ===========================================================================
@@ -2172,7 +2213,7 @@ end
 function OnInputHandler( pInputStruct:table )
 	local uiMsg = pInputStruct:GetMessageType();
 	if uiMsg == KeyEvents.KeyDown then return KeyDownHandler( pInputStruct:GetKey() ); end
-	if uiMsg == KeyEvents.KeyUp then return KeyUpHandler( pInputStruct:GetKey() ); end	
+	if uiMsg == KeyEvents.KeyUp then return KeyUpHandler( pInputStruct:GetKey() ); end
 	return false;
 end
 
@@ -2198,7 +2239,7 @@ function OnShutdown()
 	Events.GovernmentPolicyObsoleted.Remove( OnGovernmentPolicyChanged );
 	Events.LocalPlayerChanged.Remove( OnLocalPlayerChanged );
 	Events.LocalPlayerTurnBegin.Remove( OnLocalPlayerTurnBegin );
-	Events.LocalPlayerTurnEnd.Remove( OnLocalPlayerTurnEnd );	
+	Events.LocalPlayerTurnEnd.Remove( OnLocalPlayerTurnEnd );
 	Events.SystemUpdateUI.Remove( OnUpdateUI );
 
 	Search.DestroyContext("Civics");
@@ -2213,7 +2254,7 @@ function ScrollToNode( typeName:string )
 	local size  = (m_width / Controls.NodeScroller:GetRatio()) - m_width;
 	percent = math.clamp( x  / size, 0, 1);
 	Controls.NodeScroller:SetScrollValue(percent);
-	m_kSearchResultIM:DestroyInstances();	
+	m_kSearchResultIM:DestroyInstances();
 	Controls.SearchResultsPanelContainer:SetHide(true);
 end
 
@@ -2261,9 +2302,9 @@ function OnSearchCharCallback()
 					local iconName = DATA_ICON_PREFIX .. civicType;
 					instance.SearchIcon:SetIcon(iconName);
 
-					instance.Button:RegisterCallback(Mouse.eLClick, function() 
+					instance.Button:RegisterCallback(Mouse.eLClick, function()
 						Controls.SearchEditBox:SetText(defaultText);
-						ScrollToNode(civicType); 
+						ScrollToNode(civicType);
 					end);
 
 					instance.Button:SetToolTipString(ToolTipHelper.GetToolTip(v[1], Game.GetLocalPlayer()));
@@ -2272,7 +2313,7 @@ function OnSearchCharCallback()
 				end
 			end
 		end
-		
+
 		Controls.SearchResultsStack:CalculateSize();
 		Controls.SearchResultsPanel:CalculateSize();
 		Controls.SearchResultsPanelContainer:SetHide(not hasResults);
@@ -2297,7 +2338,7 @@ function OnSearchCommitCallback()
 		if (results and #results > 0) then
 			local result = results[1];
 			if(result) then
-				ScrollToNode(result[1]); 
+				ScrollToNode(result[1]);
 			end
 		end
 
@@ -2349,7 +2390,7 @@ end
 function BuildTree()
 	local kNodeGrid	:table = nil;
 	local kPaths	:table = nil;			-- Recommended line pathing
-	kNodeGrid, kPaths = LayoutNodeGrid();	-- Layout nodes. 
+	kNodeGrid, kPaths = LayoutNodeGrid();	-- Layout nodes.
 	AllocateUI( kNodeGrid, kPaths );
 end
 
@@ -2359,12 +2400,12 @@ end
 --				place to do it.
 -- ===========================================================================
 function LateInitialize()
-	
+
 	PopulateStaticData();
 	g_kItemDefaults = PopulateItemData("Civics","CivicType","CivicPrereqs","Civic","PrereqCivic");
 	PopulateEraData();
 	PopulateFilterData();
-	PopulateSearchData();	
+	PopulateSearchData();
 	BuildTree();
 
 	-- May be observation mode.
@@ -2374,7 +2415,7 @@ function LateInitialize()
 	end
 
 	Resize();
-	
+
 	m_kCurrentData = GetCurrentData( m_ePlayer );
 	View( m_kCurrentData );
 end
@@ -2402,10 +2443,10 @@ function Initialize()
 		end
 		debugExplicitList = temp;
 	end
-	
+
 	-- Is the randomized tree game mode (a delicious topping) active?
-	m_isTreeRandomized = GameCapabilities.HasCapability("CAPABILITY_TREE_RANDOMIZER");	
-	
+	m_isTreeRandomized = GameCapabilities.HasCapability("CAPABILITY_TREE_RANDOMIZER");
+
 	-- UI Events
 	ContextPtr:SetInitHandler( OnInit );
 	ContextPtr:SetInputHandler( OnInputHandler, true );
@@ -2417,7 +2458,7 @@ function Initialize()
 	Controls.SearchResultsPanelContainer:RegisterMouseEnterCallback(OnSearchResultsPanelContainerMouseEnter);
 	Controls.SearchResultsPanelContainer:RegisterMouseExitCallback(OnSearchResultsPanelContainerMouseExit);
 
-	local pullDownButton = Controls.FilterPulldown:GetButton();	
+	local pullDownButton = Controls.FilterPulldown:GetButton();
 	pullDownButton:RegisterCallback(Mouse.eLClick, OnClickToggleFilter);
 
 	-- LUA Events
@@ -2425,7 +2466,7 @@ function Initialize()
 	LuaEvents.LaunchBar_RaiseCivicsTree.Add( OnOpen );
 	LuaEvents.LaunchBar_CloseCivicsTree.Add( OnClose );
 
-	-- Game engine Event	
+	-- Game engine Event
 	Events.BuildingChanged.Add( OnBuildingChanged );
 	Events.CityFocusChanged.Add( OnUpdateDueToCity );
 	Events.CityInitialized.Add( OnCityInitialized );
