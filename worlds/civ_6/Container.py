@@ -61,6 +61,7 @@ def generate_modinfo(multiworld: MultiWorld) -> str:
     <File>TechTree.lua</File>
     <File>TechTree.xml</File>
     <File>TechTreeNode.xml</File>
+    <File>ArchipelagoRunner.lua</File>
   </Files>
   <InGameActions>
     <UpdateDatabase id="ArchipelagoItems">
@@ -97,6 +98,10 @@ def generate_modinfo(multiworld: MultiWorld) -> str:
         <LuaReplace>TechTree.lua</LuaReplace>
       </Properties>
     </ReplaceUIScript>
+
+    <AddGameplayScripts id="ArchipelagoScripts">
+      <File>ArchipelagoRunner.lua</File>
+    </AddGameplayScripts>
   </InGameActions>
 </Mod>
         """
@@ -124,7 +129,7 @@ def generate_new_items(world) -> str:
            civic in civics])}
   </Types>
   <Technologies>
-      <Row TechnologyType="TECH_BLOCKER" Name="TECH_BLOCKER" EraType="ERA_FUTURE" UITreeRow="0" Cost="9999" AdvisorType="ADVISOR_GENERIC" Description="Archipelago Tech created to prevent players from researching their own tech"/>
+      <Row TechnologyType="TECH_BLOCKER" Name="TECH_BLOCKER" EraType="ERA_ANCIENT" UITreeRow="0" Cost="9999" AdvisorType="ADVISOR_GENERIC" Description="Archipelago Tech created to prevent players from researching their own tech"/>
 {"".join([f'{tab}<Row TechnologyType="{location.name}" '
                f'Name="{world.multiworld.player_name[location.item.player]}{apo}s '
                f'{location.item.name}" '
@@ -136,7 +141,7 @@ def generate_new_items(world) -> str:
                for location in techs])}
   </Technologies>
   <Civics>
-      <Row CivicType="CIVIC_BLOCKER" Name="CIVIC_BLOCKER" EraType="ERA_FUTURE" UITreeRow="0" Cost="9999" AdvisorType="ADVISOR_GENERIC" Description="Archipelago Civic created to prevent players from researching their own civics"/>
+      <Row CivicType="CIVIC_BLOCKER" Name="CIVIC_BLOCKER" EraType="ERA_ANCIENT" UITreeRow="0" Cost="9999" AdvisorType="ADVISOR_GENERIC" Description="Archipelago Civic created to prevent players from researching their own civics"/>
 {"".join([f'{tab}<Row CivicType="{location.name}" '
                f'Name="{world.multiworld.player_name[location.item.player]}{apo}s '
                f'{location.item.name}" '

@@ -598,11 +598,15 @@ function AllocateUI( kNodeGrid:table, kPaths:table )
       end
       node["unlockGOV"] = InstanceManager:new( "GovernmentIcon", "GovernmentInstanceGrid", node.UnlockStack );
 
-      if IsAPTech(item.Type) then
-        PopulateUnlockablesForTech(playerId, tech.Index, node["unlockIM"], function() SetCurrentNode(item.Hash); end);
-        node.NodeButton:RegisterCallback( Mouse.eLClick, function() SetCurrentNode(item.Hash); end);
-        node.OtherStates:RegisterCallback( Mouse.eLClick, function() SetCurrentNode(item.Hash); end);
+      item.Callback = function()
+        if IsAPTech(item.Type) then
+          SetCurrentNode(item.Hash);
+        end
       end
+
+      PopulateUnlockablesForTech(playerId, tech.Index, node["unlockIM"], item.Callback);
+      node.NodeButton:RegisterCallback( Mouse.eLClick, item.Callback);
+      node.OtherStates:RegisterCallback( Mouse.eLClick, item.Callback);
 
       -- Set position and save.
       node.Top:SetOffsetVal( horizontal, vertical);
