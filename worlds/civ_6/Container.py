@@ -51,6 +51,7 @@ def generate_modinfo(multiworld: MultiWorld) -> str:
     <Description>This mod disables the ability for players to research their own tech tree and
       instead provides Archipelago-specific techs that can be researched.</Description>
     <Authors>Hesto2</Authors>
+    <CompatibleVersions>2.0</CompatibleVersions>
   </Properties>
 
   <Files>
@@ -62,6 +63,7 @@ def generate_modinfo(multiworld: MultiWorld) -> str:
     <File>TechTree.xml</File>
     <File>TechTreeNode.xml</File>
     <File>ArchipelagoRunner.lua</File>
+    <File>ArchipelagoIcons.xml</File>
   </Files>
   <InGameActions>
     <UpdateDatabase id="ArchipelagoItems">
@@ -102,6 +104,9 @@ def generate_modinfo(multiworld: MultiWorld) -> str:
     <AddGameplayScripts id="ArchipelagoScripts">
       <File>ArchipelagoRunner.lua</File>
     </AddGameplayScripts>
+    <UpdateIcons id="icons">
+      <File>ArchipelagoIcons.xml</File>
+    </UpdateIcons>
   </InGameActions>
 </Mod>
         """
