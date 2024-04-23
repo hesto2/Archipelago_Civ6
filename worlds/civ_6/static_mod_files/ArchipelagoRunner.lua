@@ -62,7 +62,7 @@ end
 
 function NotifyReceivedItem(item, index)
     NotificationManager:SendNotification(NotificationTypes.USER_DEFINED_2, item.Name .. " Received",
-        "You have received " .. item.Name .. " from " .. item.Sender, 0, index) -- 0/index are techincally x/y coords, but if they aren't unique then it won't stack the notifications
+        "You have received " .. item.Name .. (item.Sender and " from " .. item.Sender or ""), 0, index) -- 0/index are techincally x/y coords, but if they aren't unique then it won't stack the notifications
 end
 
 -- ReceiveItem is a global function that can be called from outside the game via Game.ReceiveItem(item, sender)
@@ -95,7 +95,11 @@ function GetCheckedLocations()
 end
 
 function IsInGame()
-    return IS_IN_GAME
+    result = "true"
+    if IS_IN_GAME == false then
+        result = "false"
+    end
+    return CLIENT_PREFIX .. result .. CLIENT_POSTFIX
 end
 
 function Init()
@@ -125,7 +129,6 @@ function Init()
         end
     end
 
-    -- Give AP techs/civics to AI so they aren't tempted to research them for no reason
     PLAYERS = Game.GetPlayers()
     for key, player in pairs(PLAYERS) do
         if player:IsHuman() == false then
@@ -147,7 +150,7 @@ function Init()
         else
             HUMAN_PLAYER = player
             if player:GetCulture():GetProgressingCivic() == 0 then
-                print("Setting human player to first AP civic")
+                print("Setting human player's progress to first AP civic")
                 player:GetCulture():SetProgressingCivic(CIVIC_BLOCKER_ID + 1) -- Game starts player researching code of laws, switch it to the first AP civic
             end
         end

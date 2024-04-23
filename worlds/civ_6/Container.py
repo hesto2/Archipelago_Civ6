@@ -84,6 +84,8 @@ def generate_modinfo(multiworld: MultiWorld) -> str:
       </Properties>
       <File>ResearchChooser.lua</File>
       <File>ResearchChooser.xml</File>
+      <File>CivicsChooser.lua</File>
+      <File>CivicsChooser.xml</File>
 
       <File>TechTree.lua</File>
       <File>TechTree.xml</File>

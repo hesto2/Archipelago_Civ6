@@ -1,0 +1,182 @@
+import asyncio
+import logging
+import traceback
+
+from CommonClient import ClientCommandProcessor, CommonContext, get_base_parser, logger, server_loop, gui_enabled
+from NetUtils import ClientStatus, NetworkItem
+import Utils
+from worlds.civ_6.CivVIInterface import CivVIInterface
+from worlds.civ_6.Items import generate_item_table
+from worlds.civ_6.Locations import generate_location_table
+from worlds.civ_6.TunerClient import TunerErrorException
+
+
+class CivVICommandProcessor(ClientCommandProcessor):
+    def __init__(self, ctx: CommonContext):
+        super().__init__(ctx)
+
+    def _cmd_deathlink(self):
+        """Toggle deathlink from client. Overrides default setting."""
+        if isinstance(self.ctx, CivVIContext):
+            new_value = True
+            if (self.tags["DeathLink"]):
+                new_value = False
+            Utils.async_start(self.ctx.update_death_link(
+                new_value), name="Update Deathlink")
+
+
+class CivVIContext(CommonContext):
+    is_pending_death_link_reset = False
+    command_processor = CivVICommandProcessor
+    game = "Civilization VI"
+    items_handling = 0b111
+    tuner_sync_task = None
+    game_interface: CivVIInterface
+    item_table = {}
+    location_table = {}
+    location_name_to_id = {}
+    item_id_to_name = {}
+
+    def __init__(self, server_address, password):
+        super().__init__(server_address, password)
+        self.game_interface = CivVIInterface(logger)
+        location_by_era = generate_location_table()
+        item_by_era = generate_item_table()
+        for era, locations in location_by_era.items():
+            for item_name, location in locations.items():
+                self.location_name_to_id[location.name] = location.code
+                self.location_table[location.name] = location
+
+        for era, items in item_by_era.items():
+            for item_name, item in items.items():
+                self.item_id_to_name[item.code] = item.name
+                self.item_table[item.name] = item
+
+    def on_deathlink(self, data: Utils.Dict[str, Utils.Any]) -> None:
+        super().on_deathlink(data)
+        # TODO: Implement deathlink handling
+
+    async def server_auth(self, password_requested: bool = False):
+        if password_requested and not self.password:
+            await super(CivVIContext, self).server_auth(password_requested)
+        await self.get_username()
+        await self.send_connect()
+
+    def on_package(self, cmd: str, args: dict):
+        if cmd == "Connected":
+            if "death_link" in args["slot_data"]:
+                Utils.async_start(self.update_death_link(
+                    bool(args["slot_data"]["death_link"])))
+
+
+async def tuner_sync_task(ctx: CivVIContext):
+    logger.info("Starting CivVI connector")
+    while not ctx.exit_event.is_set():
+        try:
+            is_game_ready = await handle_game_not_ready(ctx)
+            if is_game_ready:
+                await _handle_game_ready(ctx)
+        except Exception as e:
+            if isinstance(e, TunerErrorException):
+                logger.error(str(e))
+            else:
+                logger.error(traceback.format_exc())
+
+            logger.info("Attempting to reconnect to Civ VI...")
+            await asyncio.sleep(3)
+            continue
+
+
+async def handle_checked_location(ctx: CivVIContext):
+    checked_locations = ctx.game_interface.get_checked_locations()
+    checked_location_ids = [location.code for location_name, location in ctx.location_table.items(
+    ) if location_name in checked_locations]
+
+    await ctx.send_msgs([{"cmd": "LocationChecks", "locations": checked_location_ids}])
+
+
+async def handle_receive_items(ctx: CivVIContext):
+    for network_item in ctx.items_received:
+        ctx.game_interface.give_item_to_player(
+            ctx.item_id_to_name[network_item.item], ctx.player_names[network_item.player])
+
+
+async def handle_check_goal_complete(ctx: CivVIContext):
+  # TODO: Implement goal completion handling
+    # logger.debug("Sending Goal Complete")
+    # await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
+    pass
+
+
+async def handle_check_deathlink(ctx: CivVIContext):
+  # TODO: Implement deathlink handling
+    pass
+
+
+async def _handle_game_ready(ctx: CivVIContext):
+    if ctx.server:
+        if not ctx.slot:
+            await asyncio.sleep(1)
+            return
+        await handle_receive_items(ctx)
+        await handle_checked_location(ctx)
+        await handle_check_goal_complete(ctx)
+
+        if "DeathLink" in ctx.tags:
+            await handle_check_deathlink(ctx)
+        await asyncio.sleep(3)
+    else:
+        logger.info("Waiting for player to connect to server")
+        await asyncio.sleep(3)
+
+
+async def handle_game_not_ready(ctx: CivVIContext):
+    ready = True
+    if not ctx.game_interface.is_connected():
+        logger.info("Attempting to connect to Civ VI...")
+        ready = False
+    elif not ctx.game_interface.is_in_game():
+        logger.info(
+            "Waiting for player to load a save file or start a new game")
+        ready = False
+    return ready
+
+
+def main(connect=None, password=None, name=None):
+    Utils.init_logging("Civilization VI Client")
+
+    async def _main(connect, password, name):
+        ctx = CivVIContext(connect, password)
+        ctx.auth = name
+        ctx.server_task = asyncio.create_task(
+            server_loop(ctx), name="ServerLoop")
+        if gui_enabled:
+            ctx.run_gui()
+        await asyncio.sleep(1)
+
+        ctx.tuner_sync_task = asyncio.create_task(
+            tuner_sync_task(ctx), name="DolphinSync")
+
+        await ctx.exit_event.wait()
+        ctx.server_address = None
+
+        await ctx.shutdown()
+
+        if ctx.tuner_sync_task:
+            await asyncio.sleep(3)
+            await ctx.tuner_sync_task
+
+    import colorama
+
+    colorama.init()
+    asyncio.run(_main(connect, password, name))
+    colorama.deinit()
+
+
+if __name__ == "__main__":
+    parser = get_base_parser()
+    parser.add_argument('--name', default=None,
+                        help="Slot Name to connect as.")
+    args = parser.parse_args()
+    logger.setLevel(logging.DEBUG)
+    main(args.connect, args.password, args.name)
