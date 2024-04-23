@@ -38,6 +38,7 @@ function GiveItemToPlayer(item, index)
                 if HUMAN_PLAYER:GetTechs():HasTech(id) == false then
                     print("Giving Player", item.Name, " From: ", item.Sender)
                     HUMAN_PLAYER:GetTechs():SetTech(id, true)
+                    SetLastReceivedIndex(GetLastReceivedIndex() + 1)
                     NotifyReceivedItem(item, index)
                 end
                 return
@@ -52,6 +53,7 @@ function GiveItemToPlayer(item, index)
                 if HUMAN_PLAYER:GetCulture():HasCivic(id) == false then
                     print("Giving Player", item.Name, " From: ", item.Sender)
                     HUMAN_PLAYER:GetCulture():SetCivic(id, true)
+                    SetLastReceivedIndex(GetLastReceivedIndex() + 1)
                     NotifyReceivedItem(item)
                 end
                 return
@@ -102,6 +104,19 @@ function IsInGame()
     return CLIENT_PREFIX .. result .. CLIENT_POSTFIX
 end
 
+function SetLastReceivedIndex(index)
+    Game.SetProperty("LastReceivedIndex", index)
+end
+
+function GetLastReceivedIndex()
+    return Game.GetProperty("LastReceivedIndex") or 0
+end
+
+function ClientGetLastReceivedIndex()
+    local index = GetLastReceivedIndex()
+    return CLIENT_PREFIX .. tostring(index) .. CLIENT_POSTFIX
+end
+
 function Init()
     print("Running Main")
     print("Adding turn begin")
@@ -112,6 +127,7 @@ function Init()
     Game.ReceiveItem = ReceiveItem
     Game.GetCheckedLocations = GetCheckedLocations
     Game.IsInGame = IsInGame
+    Game.ClientGetLastReceivedIndex = ClientGetLastReceivedIndex
 
     -- Initialize the techs
     TECHS = DB.Query("Select * FROM Technologies")
@@ -150,7 +166,7 @@ function Init()
         else
             HUMAN_PLAYER = player
             if player:GetCulture():GetProgressingCivic() == 0 then
-                print("Setting human player's progress to first AP civic")
+                print("Setting human player to first AP civic")
                 player:GetCulture():SetProgressingCivic(CIVIC_BLOCKER_ID + 1) -- Game starts player researching code of laws, switch it to the first AP civic
             end
         end
