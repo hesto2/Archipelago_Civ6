@@ -4,8 +4,6 @@ TECH_BLOCKER_ID = -1
 CIVICS = {}
 CIVIC_BLOCKER_ID = -1
 HUMAN_PLAYER = nil
-RECEIVED_ITEMS = {}
--- {0: {Name: "TECH_POTTERY", Sender: "Mike"}}
 
 -- Messages read by the client will be started/ended with these
 CLIENT_PREFIX = "APSTART:"
@@ -28,53 +26,9 @@ function OnTurnBegin()
     print("END OnTurnBegin")
 end
 
-function GiveItemToPlayer(item, index)
-    -- Handle TECHS
-    if string.sub(item.Name, 1, 4) == "TECH" then
-        for key, value in pairs(TECHS) do
-            name = value.TechnologyType
-            if name == item.Name then
-                id = key - 1
-                if HUMAN_PLAYER:GetTechs():HasTech(id) == false then
-                    print("Giving Player", item.Name, " From: ", item.Sender)
-                    HUMAN_PLAYER:GetTechs():SetTech(id, true)
-                    SetLastReceivedIndex(GetLastReceivedIndex() + 1)
-                    NotifyReceivedItem(item, index)
-                end
-                return
-            end
-        end
-        -- Handle CIVICS
-    elseif string.sub(item.Name, 1, 5) == "CIVIC" then
-        for key, value in pairs(CIVICS) do
-            name = value.CivicType
-            if name == item.Name then
-                id = key - 1
-                if HUMAN_PLAYER:GetCulture():HasCivic(id) == false then
-                    print("Giving Player", item.Name, " From: ", item.Sender)
-                    HUMAN_PLAYER:GetCulture():SetCivic(id, true)
-                    SetLastReceivedIndex(GetLastReceivedIndex() + 1)
-                    NotifyReceivedItem(item)
-                end
-                return
-            end
-        end
-    end
-end
-
 function NotifyReceivedItem(item, index)
     NotificationManager:SendNotification(NotificationTypes.USER_DEFINED_2, item.Name .. " Received",
         "You have received " .. item.Name .. (item.Sender and " from " .. item.Sender or ""), 0, index) -- 0/index are techincally x/y coords, but if they aren't unique then it won't stack the notifications
-end
-
--- ReceiveItem is a global function that can be called from outside the game via Game.ReceiveItem(item, sender)
-function ReceiveItem(item_name, sender)
-    print("Received item from multiworld", item_name, sender)
-    new_item = {}
-    new_item.Name = item_name
-    new_item.Sender = sender
-    RECEIVED_ITEMS[#RECEIVED_ITEMS + 1] = new_item
-    return
 end
 
 function GetCheckedLocations()
@@ -109,12 +63,42 @@ function SetLastReceivedIndex(index)
 end
 
 function GetLastReceivedIndex()
-    return Game.GetProperty("LastReceivedIndex") or 0
+    return Game.GetProperty("LastReceivedIndex") or -1
 end
 
 function ClientGetLastReceivedIndex()
     local index = GetLastReceivedIndex()
     return CLIENT_PREFIX .. tostring(index) .. CLIENT_POSTFIX
+end
+
+function HandleReceiveItem(id, name, type, sender)
+    print("START HandleReceiveItem type: " .. type)
+    received = false
+    notification_id = id
+    if type == "TECH" and HUMAN_PLAYER:GetTechs():HasTech(id) == false then
+        print("Received Tech", id)
+        HUMAN_PLAYER:GetTechs():SetResearchProgress(id, 999999)
+        received = true
+
+    elseif type == "CIVIC" and HUMAN_PLAYER:GetCulture():HasCivic(id) == false then
+        print("Received Civic", id)
+        HUMAN_PLAYER:GetCulture():SetCulturalProgress(id, 999999)
+        notification_id = id + 100 -- Tech ids and notification ids are not unique between each other
+        received = true
+    end
+    if received then
+        SetLastReceivedIndex(GetLastReceivedIndex() + 1)
+        NotifyReceivedItem({
+            Name = name,
+            Sender = sender
+        }, notification_id)
+        NotifyReceivedItem({
+            Name = name,
+            Sender = sender
+        }, notification_id)
+    end
+
+    print("END HandleReceiveItem")
 end
 
 function Init()
@@ -128,6 +112,7 @@ function Init()
     Game.GetCheckedLocations = GetCheckedLocations
     Game.IsInGame = IsInGame
     Game.ClientGetLastReceivedIndex = ClientGetLastReceivedIndex
+    Game.SetLastReceivedIndex = SetLastReceivedIndex
 
     -- Initialize the techs
     TECHS = DB.Query("Select * FROM Technologies")
@@ -177,3 +162,5 @@ end
 
 -- Init the script
 Init()
+
+Game.HandleReceiveItem = HandleReceiveItem
