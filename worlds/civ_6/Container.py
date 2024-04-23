@@ -59,8 +59,12 @@ def generate_modinfo(multiworld: MultiWorld) -> str:
     <File>NewPrereqs.xml</File>
     <File>ResearchChooser.lua</File>
     <File>ResearchChooser.xml</File>
+    <File>CivicsChooser.lua</File>
+    <File>CivicsChooser.xml</File>
     <File>TechTree.lua</File>
     <File>TechTree.xml</File>
+    <File>CivicsTree.lua</File>
+    <File>CivicsTree.xml</File>
     <File>TechTreeNode.xml</File>
     <File>ArchipelagoRunner.lua</File>
     <File>ArchipelagoIcons.xml</File>
@@ -83,6 +87,8 @@ def generate_modinfo(multiworld: MultiWorld) -> str:
 
       <File>TechTree.lua</File>
       <File>TechTree.xml</File>
+      <File>CivicsTree.lua</File>
+      <File>CivicsTree.xml</File>
 
       <File>TechTreeNode.xml</File>
     </ImportFiles>
@@ -98,6 +104,20 @@ def generate_modinfo(multiworld: MultiWorld) -> str:
         <LoadOrder>150001</LoadOrder>
         <LuaContext>TechTree</LuaContext>
         <LuaReplace>TechTree.lua</LuaReplace>
+      </Properties>
+    </ReplaceUIScript>
+    <ReplaceUIScript id="Archipelago_ResearchChooser">
+      <Properties>
+        <LoadOrder>150002</LoadOrder>
+        <LuaContext>CivicsChooser</LuaContext>
+        <LuaReplace>CivicsChooser.lua</LuaReplace>
+      </Properties>
+    </ReplaceUIScript>
+    <ReplaceUIScript id="Archipelago_CivicsTree">
+      <Properties>
+        <LoadOrder>150003</LoadOrder>
+        <LuaContext>CivicsTree</LuaContext>
+        <LuaReplace>CivicsTree.lua</LuaReplace>
       </Properties>
     </ReplaceUIScript>
 
