@@ -42,16 +42,16 @@ class TunerClient:
             start = split[1]
             end = start.split(CLIENT_POSTFIX)[0]
             return end
-        elif  "ERR:" in response:
+        elif "ERR:" in response:
             raise TunerErrorException(response.replace("?", ""))
         else:
             return ""
 
-    def send_game_command(self, command_string: str):
+    def send_game_command(self, command_string: str, size: int = 64):
         """Small abstraction that prefixes a command with GameCore.Game."""
-        return self.send_command("GameCore.Game." + command_string)
+        return self.send_command("GameCore.Game." + command_string, size)
 
-    def send_command(self, command_string: str):
+    def send_command(self, command_string: str, size: int = 64):
         """Send a raw commannd"""
         self.logger.debug("Sending Command: " + command_string)
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -59,7 +59,7 @@ class TunerClient:
         # Send data to the server
         command_prefix = b"CMD:0:"
         delimiter = b"\x00"
-        full_command =  b_command_string
+        full_command = b_command_string
         message = command_prefix + full_command + delimiter
         message_length = len(message).to_bytes(1, byteorder='little')
 
@@ -75,7 +75,7 @@ class TunerClient:
             sock.settimeout(.5)
 
             # big enough to handle get_checked_locations_response
-            received_data = sock.recv(1024 * 4)
+            received_data = sock.recv(size)
             data = decode_mixed_string(received_data)
             self.logger.debug('Received:')
             self.logger.debug(data)

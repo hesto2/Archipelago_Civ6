@@ -39,7 +39,7 @@ class CivVIInterface:
 
     def get_checked_locations(self) -> List[str]:
         command = "GetUnsentCheckedLocations()"
-        result = self.tuner.send_game_command(command)
+        result = self.tuner.send_game_command(command, 1024 * 4)
         return result.split(",")
 
     def get_last_received_index(self) -> int:
