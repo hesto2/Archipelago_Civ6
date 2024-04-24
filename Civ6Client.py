@@ -1,12 +1,13 @@
 import asyncio
 import logging
 import traceback
+from typing import Dict
 
 from CommonClient import ClientCommandProcessor, CommonContext, get_base_parser, logger, server_loop, gui_enabled
 from NetUtils import ClientStatus, NetworkItem
 import Utils
 from worlds.civ_6.CivVIInterface import CivVIInterface
-from worlds.civ_6.Items import generate_item_table
+from worlds.civ_6.Items import CivVIItemData, generate_item_table
 from worlds.civ_6.Locations import generate_location_table
 from worlds.civ_6.TunerClient import TunerErrorException
 
@@ -32,25 +33,25 @@ class CivVIContext(CommonContext):
     items_handling = 0b111
     tuner_sync_task = None
     game_interface: CivVIInterface
-    item_table = {}
-    location_table = {}
+    location_name_to_civ_location = {}
     location_name_to_id = {}
-    item_id_to_name = {}
+    item_id_to_civ_item: Dict[int, CivVIItemData] = {}
 
     def __init__(self, server_address, password):
         super().__init__(server_address, password)
         self.game_interface = CivVIInterface(logger)
         location_by_era = generate_location_table()
         item_by_era = generate_item_table()
+
+        # Get tables formatted in a way that is easier to use here
         for era, locations in location_by_era.items():
             for item_name, location in locations.items():
                 self.location_name_to_id[location.name] = location.code
-                self.location_table[location.name] = location
+                self.location_name_to_civ_location[location.name] = location
 
         for era, items in item_by_era.items():
             for item_name, item in items.items():
-                self.item_id_to_name[item.code] = item.name
-                self.item_table[item.name] = item
+                self.item_id_to_civ_item[item.code] = item
 
     def on_deathlink(self, data: Utils.Dict[str, Utils.Any]) -> None:
         super().on_deathlink(data)
@@ -73,8 +74,7 @@ async def tuner_sync_task(ctx: CivVIContext):
     logger.info("Starting CivVI connector")
     while not ctx.exit_event.is_set():
         try:
-            is_game_ready = await handle_game_not_ready(ctx)
-            if is_game_ready:
+            if ctx.game_interface.is_in_game():
                 await _handle_game_ready(ctx)
         except Exception as e:
             if isinstance(e, TunerErrorException):
@@ -89,16 +89,19 @@ async def tuner_sync_task(ctx: CivVIContext):
 
 async def handle_checked_location(ctx: CivVIContext):
     checked_locations = ctx.game_interface.get_checked_locations()
-    checked_location_ids = [location.code for location_name, location in ctx.location_table.items(
+    checked_location_ids = [location.code for location_name, location in ctx.location_name_to_civ_location.items(
     ) if location_name in checked_locations]
 
     await ctx.send_msgs([{"cmd": "LocationChecks", "locations": checked_location_ids}])
 
 
 async def handle_receive_items(ctx: CivVIContext):
-    for network_item in ctx.items_received:
-        ctx.game_interface.give_item_to_player(
-            ctx.item_id_to_name[network_item.item], ctx.player_names[network_item.player])
+    lastReceivedIndex = ctx.game_interface.get_last_received_index()
+    for index, network_item in enumerate(ctx.items_received):
+        if index > lastReceivedIndex:
+            item: CivVIItemData = ctx.item_id_to_civ_item[network_item.item]
+            sender = ctx.player_names[network_item.player]
+            ctx.game_interface.give_item_to_player(item, sender)
 
 
 async def handle_check_goal_complete(ctx: CivVIContext):
@@ -116,7 +119,7 @@ async def handle_check_deathlink(ctx: CivVIContext):
 async def _handle_game_ready(ctx: CivVIContext):
     if ctx.server:
         if not ctx.slot:
-            await asyncio.sleep(1)
+            await asyncio.sleep(3)
             return
         await handle_receive_items(ctx)
         await handle_checked_location(ctx)
@@ -128,18 +131,6 @@ async def _handle_game_ready(ctx: CivVIContext):
     else:
         logger.info("Waiting for player to connect to server")
         await asyncio.sleep(3)
-
-
-async def handle_game_not_ready(ctx: CivVIContext):
-    ready = True
-    if not ctx.game_interface.is_connected():
-        logger.info("Attempting to connect to Civ VI...")
-        ready = False
-    elif not ctx.game_interface.is_in_game():
-        logger.info(
-            "Waiting for player to load a save file or start a new game")
-        ready = False
-    return ready
 
 
 def main(connect=None, password=None, name=None):

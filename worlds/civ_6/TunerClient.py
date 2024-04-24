@@ -42,6 +42,8 @@ class TunerClient:
             start = split[1]
             end = start.split(CLIENT_POSTFIX)[0]
             return end
+        elif  "ERR:" in response:
+            raise TunerErrorException(response.replace("?", ""))
         else:
             return ""
 
@@ -51,6 +53,7 @@ class TunerClient:
 
     def send_command(self, command_string: str):
         """Send a raw commannd"""
+        self.logger.debug("Sending Command: " + command_string)
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         b_command_string = command_string.encode('utf-8')
         # Send data to the server

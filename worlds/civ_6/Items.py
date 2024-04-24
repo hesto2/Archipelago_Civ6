@@ -28,11 +28,11 @@ class CivVIItemData:
     cost: int
     item_type: CivVICheckType
 
-    def __init__(self, name, civ_vi_id: int, cost: int,  item_type: CivVICheckType, classification: ItemClassification = ItemClassification.progression,):
+    def __init__(self, name, civ_vi_id: int, cost: int,  item_type: CivVICheckType, id_offset: int = 0, classification: ItemClassification = ItemClassification.progression,):
         self.classification = classification
         self.civ_vi_id = civ_vi_id
         self.name = name
-        self.code = civ_vi_id + CIV_VI_AP_ITEM_ID_BASE
+        self.code = civ_vi_id + CIV_VI_AP_ITEM_ID_BASE + id_offset
         self.cost = cost
         self.item_type = item_type
 
@@ -72,7 +72,7 @@ def generate_item_table():
   # Generate Civics
     existing_civics_path = os.path.join(
         current_directory, 'data', 'existing_civics.json')
-
+    civic_id_base = 0
     with open(existing_civics_path) as f:
         existing_civics = json.load(f)
     for civic in existing_civics:
@@ -80,7 +80,7 @@ def generate_item_table():
         if era_type not in era_items:
             era_items[era_type] = {}
         era_items[era_type][civic["Type"]] = CivVIItemData(
-            civic["Type"], id_base, civic["Cost"], CivVICheckType.CIVIC)
-        id_base += 1
+            civic["Type"], civic_id_base, civic["Cost"], CivVICheckType.CIVIC, id_base)
+        civic_id_base += 1
 
     return era_items
