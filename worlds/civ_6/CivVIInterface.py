@@ -33,8 +33,12 @@ class CivVIInterface:
       # fmt: on
         self.tuner.send_game_command(command)
 
+    def resync(self) -> None:
+        command = "Resync()"
+        self.tuner.send_game_command(command)
+
     def get_checked_locations(self) -> List[str]:
-        command = "GetCheckedLocations()"
+        command = "GetUnsentCheckedLocations()"
         result = self.tuner.send_game_command(command)
         return result.split(",")
 

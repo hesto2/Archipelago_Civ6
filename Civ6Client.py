@@ -25,6 +25,14 @@ class CivVICommandProcessor(ClientCommandProcessor):
             Utils.async_start(self.ctx.update_death_link(
                 new_value), name="Update Deathlink")
 
+    def _cmd_resync(self):
+        """Resends all items to client, and has client resend all locations to server"""
+        if isinstance(self.ctx, CivVIContext):
+            logger.info("Resyncing...")
+            self.ctx.game_interface.resync()  # Resets the unsent checked locations
+            # Resends all items to client
+            asyncio.create_task(handle_receive_items(self.ctx, -1))
+
 
 class CivVIContext(CommonContext):
     is_pending_death_link_reset = False
@@ -95,10 +103,10 @@ async def handle_checked_location(ctx: CivVIContext):
     await ctx.send_msgs([{"cmd": "LocationChecks", "locations": checked_location_ids}])
 
 
-async def handle_receive_items(ctx: CivVIContext):
-    lastReceivedIndex = ctx.game_interface.get_last_received_index()
+async def handle_receive_items(ctx: CivVIContext, last_received_index: int = None):
+    last_received_index = last_received_index or ctx.game_interface.get_last_received_index()
     for index, network_item in enumerate(ctx.items_received):
-        if index > lastReceivedIndex:
+        if index > last_received_index:
             item: CivVIItemData = ctx.item_id_to_civ_item[network_item.item]
             sender = ctx.player_names[network_item.player]
             ctx.game_interface.give_item_to_player(item, sender)

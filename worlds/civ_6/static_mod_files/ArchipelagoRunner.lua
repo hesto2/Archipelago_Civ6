@@ -66,7 +66,6 @@ end
 function Resync()
     print("START resync")
     Game.SetProperty("UnsentCheckedLocations", GetCheckedLocations())
-    SetLastReceivedIndex(-1)
     print("END resync")
 end
 
