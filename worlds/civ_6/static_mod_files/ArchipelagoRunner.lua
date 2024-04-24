@@ -20,9 +20,6 @@ IS_IN_GAME = false
 function OnTurnBegin()
     print("START OnTurnBegin")
     IS_IN_GAME = true
-    for key, item in pairs(RECEIVED_ITEMS) do
-        GiveItemToPlayer(item, key)
-    end
     print("END OnTurnBegin")
 end
 
@@ -47,9 +44,33 @@ function GetCheckedLocations()
         end
     end
     print("END GetCheckedLocations")
+    return locations
+end
+
+-- CLIENT FUNCTION
+function GetUnsentCheckedLocations()
+    -- Gets the locations that have not been sent yet and returns them
+    print("START GetCheckedLocations")
+    locations = {}
+    unsent_locations = Game.GetProperty("UnsentCheckedLocations") or {}
+    for key, value in pairs(unsent_locations) do
+        name = value.TechnologyType or value.CivicType
+        table.insert(locations, value)
+    end
+    print("END GetCheckedLocations")
+    Game.SetProperty("UnsentCheckedLocations", {})
     return CLIENT_PREFIX .. table.concat(locations, ",") .. CLIENT_POSTFIX
 end
 
+-- CLIENT FUNCTION
+function Resync()
+    print("START resync")
+    Game.SetProperty("UnsentCheckedLocations", GetCheckedLocations())
+    SetLastReceivedIndex(-1)
+    print("END resync")
+end
+
+-- CLIENT FUNCTION
 function IsInGame()
     result = "true"
     if IS_IN_GAME == false then
@@ -66,6 +87,7 @@ function GetLastReceivedIndex()
     return Game.GetProperty("LastReceivedIndex") or -1
 end
 
+-- CLIENT FUNCTION
 function ClientGetLastReceivedIndex()
     local index = GetLastReceivedIndex()
     return CLIENT_PREFIX .. tostring(index) .. CLIENT_POSTFIX
@@ -101,18 +123,41 @@ function HandleReceiveItem(id, name, type, sender)
     print("END HandleReceiveItem")
 end
 
+function OnResearchComplete(playerID, techID)
+    print("START OnResearchComplete")
+    if playerID == HUMAN_PLAYER:GetID() and techID > TECH_BLOCKER_ID then
+        print("Tech Researched", techID)
+        tech = TECHS[techID + 1]
+        if tech then
+            locations = Game.GetProperty("UnsentCheckedLocations") or {}
+            table.insert(locations, tech.TechnologyType)
+            Game.SetProperty("UnsentCheckedLocations", locations)
+        end
+    end
+    print("END OnResearchComplete")
+end
+
+function OnCivicComplete(playerID, civicID)
+    print("START OnCivicComplete")
+    if playerID == HUMAN_PLAYER:GetID() and civicID > CIVIC_BLOCKER_ID then
+        print("Civic Researched", civicID)
+        civic = CIVICS[civicID + 1]
+        if civic then
+            locations = Game.GetProperty("UnsentCheckedLocations") or {}
+            table.insert(locations, civic.CivicType)
+            Game.SetProperty("UnsentCheckedLocations", locations)
+        end
+    end
+    print("END OnCivicComplete")
+end
+
 function Init()
     print("Running Main")
     print("Adding turn begin")
     -- Events to listen for
     Events.TurnBegin.Add(OnTurnBegin);
-
-    -- Functions to expose to the client
-    Game.ReceiveItem = ReceiveItem
-    Game.GetCheckedLocations = GetCheckedLocations
-    Game.IsInGame = IsInGame
-    Game.ClientGetLastReceivedIndex = ClientGetLastReceivedIndex
-    Game.SetLastReceivedIndex = SetLastReceivedIndex
+    Events.ResearchCompleted.Add(OnResearchComplete)
+    Events.CivicCompleted.Add(OnCivicComplete)
 
     -- Initialize the techs
     TECHS = DB.Query("Select * FROM Technologies")
@@ -163,4 +208,9 @@ end
 -- Init the script
 Init()
 
+-- Functions to expose to the client
 Game.HandleReceiveItem = HandleReceiveItem
+Game.GetUnsentCheckedLocations = GetUnsentCheckedLocations
+Game.IsInGame = IsInGame
+Game.ClientGetLastReceivedIndex = ClientGetLastReceivedIndex
+Game.Resync = Resync
