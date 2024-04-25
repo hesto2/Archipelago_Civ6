@@ -1,4 +1,6 @@
+import asyncio
 from logging import Logger
+import select
 import socket
 
 ADDRESS = "127.0.0.1"
@@ -47,15 +49,18 @@ class TunerClient:
         else:
             return ""
 
-    def send_game_command(self, command_string: str, size: int = 64):
+    async def send_game_command(self, command_string: str, size: int = 64):
         """Small abstraction that prefixes a command with GameCore.Game."""
-        return self.send_command("GameCore.Game." + command_string, size)
+        return await self.send_command("GameCore.Game." + command_string, size)
 
-    def send_command(self, command_string: str, size: int = 64):
+    async def send_command(self, command_string: str, size: int = 64):
         """Send a raw commannd"""
         self.logger.debug("Sending Command: " + command_string)
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.setblocking(False)
+
         b_command_string = command_string.encode('utf-8')
+
         # Send data to the server
         command_prefix = b"CMD:0:"
         delimiter = b"\x00"
@@ -68,18 +73,19 @@ class TunerClient:
         data = message_header + command_prefix + full_command + delimiter
 
         server_address = (ADDRESS, PORT)
+        loop = asyncio.get_event_loop()
         try:
-            sock.connect(server_address)
-            sock.sendall(data)
+            await loop.sock_connect(sock, server_address)
+            await loop.sock_sendall(sock, data)
 
-            sock.settimeout(.5)
+            # Add a delay before receiving data
+            await asyncio.sleep(.02)
 
-            # big enough to handle get_checked_locations_response
-            received_data = sock.recv(size)
-            data = decode_mixed_string(received_data)
+            received_data = await self.async_recv(sock)
+            response = decode_mixed_string(received_data)
             self.logger.debug('Received:')
-            self.logger.debug(data)
-            return self.__parse_response(data)
+            self.logger.debug(response)
+            return self.__parse_response(response)
 
         except socket.timeout:
             self.logger.debug('Timeout occurred while receiving data')
@@ -93,3 +99,7 @@ class TunerClient:
                 raise TunerErrorException(e)
         finally:
             sock.close()
+
+    async def async_recv(self, sock, timeout=1.0, size=4096):
+        response = await asyncio.wait_for(asyncio.get_event_loop().sock_recv(sock, size), timeout)
+        return response

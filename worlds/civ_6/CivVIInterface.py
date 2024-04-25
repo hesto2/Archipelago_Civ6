@@ -14,10 +14,10 @@ class CivVIInterface:
         self.logger = logger
         self.tuner = TunerClient(logger)
 
-    def is_in_game(self) -> bool:
+    async def is_in_game(self) -> bool:
         command = "IsInGame()"
         try:
-            result = self.tuner.send_game_command(command)
+            result = await self.tuner.send_game_command(command)
             return result == "true"
         except TunerTimeoutException:
             self.logger.info("Connected to game,  waiting for game to start")
@@ -27,28 +27,29 @@ class CivVIInterface:
                 "Not connected to game, waiting for connection to be available")
             return False
 
-    def give_item_to_player(self, item: CivVIItemData, sender: str = ""):
+    async def give_item_to_player(self, item: CivVIItemData, sender: str = ""):
       # fmt: off
         command = f"HandleReceiveItem({item.civ_vi_id}, \"{item.name}\", \"{item.item_type.value}\", \"{sender}\")"
       # fmt: on
-        self.tuner.send_game_command(command)
+        await self.tuner.send_game_command(command)
 
-    def resync(self) -> None:
+    async def resync(self) -> None:
+        """Has the client resend all the checked locations"""
         command = "Resync()"
-        self.tuner.send_game_command(command)
+        await self.tuner.send_game_command(command)
 
-    def get_checked_locations(self) -> List[str]:
+    async def get_checked_locations(self) -> List[str]:
         command = "GetUnsentCheckedLocations()"
-        result = self.tuner.send_game_command(command, 1024 * 4)
+        result = await self.tuner.send_game_command(command, 1024 * 4)
         return result.split(",")
 
-    def get_last_received_index(self) -> int:
+    async def get_last_received_index(self) -> int:
         command = "ClientGetLastReceivedIndex()"
-        result = self.tuner.send_game_command(command)
+        result = await self.tuner.send_game_command(command)
         return int(result)
 
-    def send_notification(self, item: CivVIItemData, sender="someone") -> None:
-      # fmt: off
+    async def send_notification(self, item: CivVIItemData, sender="someone") -> None:
+        # fmt: off
         command = f"GameCore.NotificationManager:SendNotification(GameCore.NotificationTypes.USER_DEFINED_2, \"{item.name} Received\", \"You have received {item.name} from \" .. \"{sender}\", 0, {item.civ_vi_id})"
-      # fmt: on
-        self.tuner.send_command(command)
+        # fmt: on
+        await self.tuner.send_command(command)

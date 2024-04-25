@@ -26,12 +26,10 @@ class CivVICommandProcessor(ClientCommandProcessor):
                 new_value), name="Update Deathlink")
 
     def _cmd_resync(self):
-        """Resends all items to client, and has client resend all locations to server"""
+        """Resends all items to client, and has client resend all locations to server. This can take up to a minute if the player has received a lot of items"""
         if isinstance(self.ctx, CivVIContext):
             logger.info("Resyncing...")
-            self.ctx.game_interface.resync()  # Resets the unsent checked locations
-            # Resends all items to client
-            asyncio.create_task(handle_receive_items(self.ctx, -1))
+            asyncio.create_task(self.ctx.resync())
 
 
 class CivVIContext(CommonContext):
@@ -44,6 +42,8 @@ class CivVIContext(CommonContext):
     location_name_to_civ_location = {}
     location_name_to_id = {}
     item_id_to_civ_item: Dict[int, CivVIItemData] = {}
+    processing_multiple_items = False
+    disconnected = False
 
     def __init__(self, server_address, password):
         super().__init__(server_address, password)
@@ -60,6 +60,15 @@ class CivVIContext(CommonContext):
         for era, items in item_by_era.items():
             for item_name, item in items.items():
                 self.item_id_to_civ_item[item.code] = item
+
+    async def resync(self):
+        if self.processing_multiple_items:
+            logger.info(
+                "Waiting for items to finish processing, try again later")
+            return
+        await self.game_interface.resync()
+        await handle_receive_items(self, -1)
+        logger.info("Resynced")
 
     def on_deathlink(self, data: Utils.Dict[str, Utils.Any]) -> None:
         super().on_deathlink(data)
@@ -82,8 +91,13 @@ async def tuner_sync_task(ctx: CivVIContext):
     logger.info("Starting CivVI connector")
     while not ctx.exit_event.is_set():
         try:
-            if ctx.game_interface.is_in_game():
+            if ctx.processing_multiple_items == True:
+                logger.debug("Waiting for items to finish processing")
+                await asyncio.sleep(3)
+            elif await ctx.game_interface.is_in_game():
                 await _handle_game_ready(ctx)
+            else:
+                await asyncio.sleep(3)
         except Exception as e:
             if isinstance(e, TunerErrorException):
                 logger.error(str(e))
@@ -91,25 +105,34 @@ async def tuner_sync_task(ctx: CivVIContext):
                 logger.error(traceback.format_exc())
 
             logger.info("Attempting to reconnect to Civ VI...")
+            ctx.disconnected = True
             await asyncio.sleep(3)
             continue
 
 
 async def handle_checked_location(ctx: CivVIContext):
-    checked_locations = ctx.game_interface.get_checked_locations()
+    checked_locations = await ctx.game_interface.get_checked_locations()
     checked_location_ids = [location.code for location_name, location in ctx.location_name_to_civ_location.items(
     ) if location_name in checked_locations]
 
     await ctx.send_msgs([{"cmd": "LocationChecks", "locations": checked_location_ids}])
 
 
-async def handle_receive_items(ctx: CivVIContext, last_received_index: int = None):
-    last_received_index = last_received_index or ctx.game_interface.get_last_received_index()
+async def handle_receive_items(ctx: CivVIContext, last_received_index_override: int = None):
+    last_received_index = last_received_index_override or await ctx.game_interface.get_last_received_index()
+    if len(ctx.items_received) - last_received_index > 1:
+        logger.debug("Multiple items received")
+        ctx.processing_multiple_items = True
     for index, network_item in enumerate(ctx.items_received):
         if index > last_received_index:
             item: CivVIItemData = ctx.item_id_to_civ_item[network_item.item]
             sender = ctx.player_names[network_item.player]
-            ctx.game_interface.give_item_to_player(item, sender)
+            await ctx.game_interface.give_item_to_player(item, sender)
+            await asyncio.sleep(0.02)
+
+    if ctx.processing_multiple_items:
+        logger.debug("DONE")
+    ctx.processing_multiple_items = False
 
 
 async def handle_check_goal_complete(ctx: CivVIContext):
@@ -129,6 +152,9 @@ async def _handle_game_ready(ctx: CivVIContext):
         if not ctx.slot:
             await asyncio.sleep(3)
             return
+        if ctx.disconnected == True:
+            ctx.disconnected = False
+            logger.info("Reconnected to Civ VI")
         await handle_receive_items(ctx)
         await handle_checked_location(ctx)
         await handle_check_goal_complete(ctx)
