@@ -234,8 +234,8 @@ end
 function IsSlotTypeLegalInRow( nRowIndex:number, strSlotType:string )
 	-- Treat great people like wildcards.
 	if strSlotType == "SLOT_GREAT_PERSON" then strSlotType = "SLOT_WILDCARD"; end
-	return #m_ActivePolicyRows[nRowIndex].SlotArray > 0 and 
-		(ROW_SLOT_TYPES[nRowIndex] == strSlotType or 
+	return #m_ActivePolicyRows[nRowIndex].SlotArray > 0 and
+		(ROW_SLOT_TYPES[nRowIndex] == strSlotType or
 		(m_isAllowWildcardsAnywhere and strSlotType == "SLOT_WILDCARD") or
 		(m_isAllowAnythingInWildcardSlot and nRowIndex == ROW_INDEX.WILDCARD));
 end
@@ -262,7 +262,7 @@ function Resize()
 	local nRowsWithCatalogOffset = 0;
 	local nRowsWithCatalogWidth = math.min(SIZE_POLICY_ROW_MIN, m_width - SIZE_POLICY_CATALOG_MIN);
 	local nPolicyCatalogWidth = math.max(SIZE_POLICY_CATALOG_MIN, m_width - nRowsWithCatalogWidth);
-	
+
 	-- Do we have the extra space to fit MyGovt card onscreen in Catalog tab?
 	m_bShowMyGovtInPolicies = (nExtraSpace/2 > nGovtWidth);
 	if (m_bShowMyGovtInPolicies) then
@@ -301,16 +301,16 @@ function Resize()
 	Controls.ButtonPolicies:SetSizeX( sizeX + SIZE_TAB_BUTTON_TEXT_PADDING );
 	Controls.SelectPolicies:SetSizeX( sizeX + SIZE_TAB_BUTTON_TEXT_PADDING + 4 );
 
-	textControl = Controls.ButtonGovernments:GetTextControl();	
+	textControl = Controls.ButtonGovernments:GetTextControl();
 	sizeX = textControl:GetSizeX();
 	Controls.ButtonGovernments:SetSizeX( sizeX + SIZE_TAB_BUTTON_TEXT_PADDING );
 	Controls.SelectGovernments:SetSizeX( sizeX + SIZE_TAB_BUTTON_TEXT_PADDING + 4 );
-	
+
 	textControl = Controls.ButtonMyGovernment:GetTextControl();
 	sizeX = textControl:GetSizeX();
 	Controls.ButtonMyGovernment:SetSizeX( sizeX + SIZE_TAB_BUTTON_TEXT_PADDING );
 	Controls.SelectMyGovernment:SetSizeX( sizeX + SIZE_TAB_BUTTON_TEXT_PADDING + 4 );
-	
+
 	-- Screen size changing means we need to rejigger all the UI elements
 	RefreshAllData();
 	-- If said UI elements are CURRENTLY visible, we need to do that now.
@@ -379,7 +379,7 @@ function RealizeMyGovernmentPage()
 	-- Clear heritage bonuses; will rebuild them throughout...
 	Controls.HeritageBonusStack:DestroyAllChildren();
 
-	-- If bonus exists for current one.	
+	-- If bonus exists for current one.
 	if bonusName ~= "NO_GOVERNMENTBONUS" then
 		iBonusIndex = GameInfo.GovernmentBonusNames[bonusName].Index;
 	end
@@ -397,7 +397,7 @@ function RealizeMyGovernmentPage()
 		local iTurnsTillNextBonus		:number = kPlayerCulture:GetIncrementingBonusTurnsUntilNext(iBonusIndex);
 		local accumulatedBonusText		:string = Locale.ToUpper(g_kCurrentGovernment.BonusAccumulatedText);
 		local accumulatedBonusTooltip	:string = Locale.Lookup(g_kCurrentGovernment.BonusAccumulatedTooltip);
-				
+
 		Controls.BonusPercent:SetText( tostring(iFlatBonus) );
 		Controls.BonusText:SetText(accumulatedBonusText );
 		if Controls.BonusText:GetSizeY() > MAX_HEIGHT_GOVT_DESC then
@@ -420,8 +420,8 @@ function RealizeMyGovernmentPage()
 		--Create Instances
 		------------------------------------------------------------
 		-- Add current heritage/incrementing bonus or extra bonuses
-		local heritageInstance	:table = {};	
-		ContextPtr:BuildInstanceForControl( "HeritageBonusInstance", heritageInstance, Controls.HeritageBonusStack );	
+		local heritageInstance	:table = {};
+		ContextPtr:BuildInstanceForControl( "HeritageBonusInstance", heritageInstance, Controls.HeritageBonusStack );
 		isHeritageBonusEmpty = false;
 		if TruncateString(heritageInstance.Text, MAX_BEFORE_TRUNC_HERITAGE_BONUS, accumulatedBonusText) then
 			heritageInstance.Text:SetToolTipString(accumulatedBonusText);
@@ -460,7 +460,7 @@ function RealizeMyGovernmentPage()
 		end
 	else
 		Controls.BonusStack:SetHide( true );
-	end	
+	end
 
 	local inherentBonusDesc :string = Locale.Lookup( g_kCurrentGovernment.BonusInherentText );
 	Controls.GovernmentBonus:SetText( Locale.ToUpper( inherentBonusDesc ));
@@ -481,7 +481,7 @@ function RealizeMyGovernmentPage()
 				iIncrementingBonus	= kPlayerCulture:GetIncrementingBonus(iBonusIndex);
 			end
 			if iIncrementingBonus > 0 then
-				local heritageInstance:table = {};	
+				local heritageInstance:table = {};
 				ContextPtr:BuildInstanceForControl( "HeritageBonusInstance", heritageInstance, Controls.HeritageBonusStack );
 				isHeritageBonusEmpty = false;
 				local accumulatedBonusText:string = Locale.ToUpper(government.BonusAccumulatedText);
@@ -507,7 +507,7 @@ function RealizeMyGovernmentPage()
 		Controls.HeritageBonusArea:SetHide(true);
 		Controls.GovernmentTop:SetOffsetY(120);
 	end
-	
+
 	Controls.GovernmentContentStack:CalculateSize()
 	Controls.GovernmentTop:SetSizeY(Controls.GovernmentContentStack:GetSizeY() + 18);
 	Controls.HeritageBonusStack:CalculateSize();
@@ -558,7 +558,7 @@ function RealizeGovernmentsPage()
 	local x:number = 0;
 	local count:number = table.count(grid);
 	local maxHeight:number = Controls.GovernmentTree:GetSizeY();
-	for _,column in orderedPairs(grid) do		
+	for _,column in orderedPairs(grid) do
 		local num				:number = table.count(column);
 		local spaceFree			:number = maxHeight-(num*SIZE_GOV_ITEM_HEIGHT);
 		local spaceBetweenEach	:number = spaceFree/ (num+1);
@@ -575,7 +575,7 @@ function RealizeGovernmentsPage()
 			dividerInst.Top:SetOffsetX(x * (SIZE_GOV_ITEM_WIDTH + SIZE_GOV_DIVIDER_WIDTH) - SIZE_GOV_DIVIDER_WIDTH);
 		end
 	end
-	
+
 	Controls.GovernmentBackground:SetSizeX(math.max( x * (SIZE_GOV_ITEM_WIDTH + SIZE_GOV_DIVIDER_WIDTH) - SIZE_GOV_DIVIDER_WIDTH, m_width ));
 	Controls.GovernmentScroller:CalculateSize();
 
@@ -593,7 +593,7 @@ function RealizeGovernmentsPage()
 	local bUnlockByFaith		:boolean= (GlobalParameters.GOVERNMENT_UNLOCK_WITH_FAITH ~= 0);
 
 	if isGovernmentChanged then
-		Controls.UnlockGovernmentsContainer:SetHide(true);	
+		Controls.UnlockGovernmentsContainer:SetHide(true);
 	elseif (table.count(m_kUnlockedGovernments) <= 1) then
 		Controls.UnlockGovernmentsContainer:SetHide(true);
 	elseif (iPolicyUnlockCost == 0 or g_kCurrentGovernment == nil) then
@@ -632,7 +632,7 @@ end
 -- ===========================================================================
 function CreateMinSlotInstance( uiStack:object, prefix:string )
 	local slotTypeInstance:table = {};
-	ContextPtr:BuildInstanceForControl( "MiniSlotType", slotTypeInstance, uiStack );	
+	ContextPtr:BuildInstanceForControl( "MiniSlotType", slotTypeInstance, uiStack );
 	slotTypeInstance.TypeIcon:SetTexture(prefix..PIC_CARD_SUFFIX_SMALL);
 
 	-- Return the icon size so we can adjust stack padding to prevent overflow
@@ -654,23 +654,23 @@ function RealizeGovernmentInstance(governmentType:string, inst:table, isCivilope
 	local totalSlots	:number = 0;
 	local totalSlotsSize:number = 0;
 	inst.SlotStack:DestroyAllChildren();
-	for i=1,government.NumSlotMilitary,1 do					
+	for i=1,government.NumSlotMilitary,1 do
 		totalSlotsSize = totalSlotsSize + CreateMinSlotInstance(inst.SlotStack, PIC_CARD_TYPE_MILITARY);
 	end
 	totalSlots = totalSlots + government.NumSlotMilitary;
 
 	for i=1,government.NumSlotEconomic,1 do
-		totalSlotsSize = totalSlotsSize + CreateMinSlotInstance(inst.SlotStack, PIC_CARD_TYPE_ECONOMIC);				
+		totalSlotsSize = totalSlotsSize + CreateMinSlotInstance(inst.SlotStack, PIC_CARD_TYPE_ECONOMIC);
 	end
 	totalSlots = totalSlots + government.NumSlotEconomic;
 
 	for i=1,government.NumSlotDiplomatic,1 do
-		totalSlotsSize = totalSlotsSize + CreateMinSlotInstance(inst.SlotStack, PIC_CARD_TYPE_DIPLOMACY);		
+		totalSlotsSize = totalSlotsSize + CreateMinSlotInstance(inst.SlotStack, PIC_CARD_TYPE_DIPLOMACY);
 	end
 	totalSlots = totalSlots + government.NumSlotDiplomatic;
 
 	for i=1,government.NumSlotWildcard,1 do
-		totalSlotsSize = totalSlotsSize + CreateMinSlotInstance(inst.SlotStack, PIC_CARD_TYPE_WILDCARD);				
+		totalSlotsSize = totalSlotsSize + CreateMinSlotInstance(inst.SlotStack, PIC_CARD_TYPE_WILDCARD);
 	end
 	totalSlots = totalSlots + government.NumSlotWildcard;
 
@@ -714,7 +714,7 @@ function RealizeGovernmentInstance(governmentType:string, inst:table, isCivilope
 			inst.CultureMeter:SetHide(true);
 			inst.CultureBacking:SetHide(true);
 		end
-		
+
 		inst.Top:ClearCallback(Mouse.eLClick);
 		inst.UnlockedIcon:SetHide( false );
 	else
@@ -728,7 +728,7 @@ function RealizeGovernmentInstance(governmentType:string, inst:table, isCivilope
 		inst.Disabled:SetHide( true );
 		inst.GovernmentImage:SetHide( false );
 	end
-	
+
 	inst.GovernmentName:SetText( Locale.ToUpper(government.Name));
 	inst.GovernmentImage:SetTexture(GameInfo.Governments[government.Index].GovernmentType);
 	local textColor:number = GetGovernmentTextColor(governmentType);
@@ -741,7 +741,7 @@ function RealizeGovernmentInstance(governmentType:string, inst:table, isCivilope
 		inst.GovernmentBonusBacking:SetColorByName( "GovBonusSelected" );
 		inst.GovPercentBonusArea:SetColorByName( "GovBonusSelected" );
 	else
-		-- Non-selected government			
+		-- Non-selected government
 		inst.Selected:SetHide( true );
 		inst.PercentImage:SetTexture( PIC_PERCENT_DARK );
 		inst.GovernmentBonusBacking:SetColorByName( "GovBonusDark" );
@@ -789,16 +789,16 @@ function RealizeGovernmentInstance(governmentType:string, inst:table, isCivilope
 		inst.BonusText:SetWrapWidth(265);
 		inst.BonusText:SetOffsetX(-5);
 	end
-		
-	-- If bonus exists for current one.	
+
+	-- If bonus exists for current one.
 	if bonusName ~= "NO_GOVERNMENTBONUS" then
 		inst.BonusStack:SetHide( false );
 	else
 		inst.BonusStack:SetHide( true );
 	end
-		
+
 	inst.GovernmentContentStack:CalculateSize();
-	
+
 	inst.Top:SetSizeY(inst.GovernmentContentStack:GetSizeY() + 12);
 	return totalSlots;
 end
@@ -847,7 +847,7 @@ function IsAbleToChangePolicies()
 	local kPlayerCulture:table = kPlayer:GetCulture();
 	if (kPlayerCulture:CivicCompletedThisTurn() or kPlayerCulture:GetNumPolicySlotsOpen() > 0) and Game.IsAllowStrategicCommands(m_ePlayer) and kPlayerCulture:PolicyChangeMade() == false then
 		return true;
-	end 
+	end
 	return false;
 end
 
@@ -862,13 +862,13 @@ function IsAbleToChangeGovernment()
 	end
 	local kPlayer		:table = Players[m_ePlayer];
 	local kPlayerCulture:table = kPlayer:GetCulture();
-	
+
 	if kPlayerCulture:CanChangeGovernmentAtAll() and
 	   not kPlayerCulture:GovernmentChangeMade() and
 	   Game.IsAllowStrategicCommands(m_ePlayer) and
 	   (g_kCurrentGovernment == nil or kPlayerCulture:CivicCompletedThisTurn()) then
 		return true;
-	end 
+	end
 	return false;
 end
 
@@ -884,16 +884,16 @@ function OnGovernmentSelected( governmentType:string )
 		local kPlayerCulture:table = kPlayer:GetCulture();
 		local eGovernmentType = GameInfo.Governments[governmentType].Index;
 		local iAnarchyTurns = kPlayerCulture:GetAnarchyTurns(eGovernmentType);
-		
+
 		local popup:table = PopupDialogInGame:new( "ConfirmGovtChange" );
 		if (iAnarchyTurns > 0 and eGovernmentType ~= -1) then
 			popup:AddText(Locale.Lookup("LOC_GOVT_CONFIRM_ANARCHY", GameInfo.Governments[governmentType].Name, iAnarchyTurns));
-			popup:AddConfirmButton(TXT_GOV_POPUP_YES, OnAcceptAnarchyChange);  
+			popup:AddConfirmButton(TXT_GOV_POPUP_YES, OnAcceptAnarchyChange);
 		else
 			popup:AddText(TXT_GOV_CONFIRM_GOVERNMENT);
-			popup:AddConfirmButton(TXT_GOV_POPUP_YES, OnAcceptGovernmentChange);  
-		end		
-		popup:AddCancelButton(TXT_GOV_POPUP_NO, OnCancelGovernmentChange); 
+			popup:AddConfirmButton(TXT_GOV_POPUP_YES, OnAcceptGovernmentChange);
+		end
+		popup:AddCancelButton(TXT_GOV_POPUP_NO, OnCancelGovernmentChange);
 		popup:Open();
 
 		RealizeGovernmentsPage();
@@ -968,7 +968,7 @@ function RealizePoliciesList()
 				listInstance.Title:SetText( tPolicy.Name );
 				listInstance.Title:SetToolTipString( tPolicy.Name );
 				listInstance.Description:SetText( tPolicy.Description );
-			
+
 				listInstance.TypeIcon:SetTexture( GetPolicyBGTexture(tSlotData.GC_PolicyType)..PIC_CARD_SUFFIX_SMALL );
 				local height:number = math.max( listInstance.TypeIcon:GetSizeY(), listInstance.Title:GetSizeY() + listInstance.Description:GetSizeY());
 				height = height + PADDING_POLICY_LIST_ITEM;
@@ -980,7 +980,7 @@ function RealizePoliciesList()
 	if height > MAX_HEIGHT_POLICIES_LIST then
 		height = MAX_HEIGHT_POLICIES_LIST;
 	end
-	
+
 	Controls.PolicyListPanel:SetSizeY(height + PADDING_POLICY_LIST_BOTTOM);
 	Controls.PolicyListScroller:SetSizeY(height - PADDING_POLICY_LIST_HEADER);
 	Controls.PolicyListScroller:CalculateSize();
@@ -1018,7 +1018,7 @@ end
 
 -- ===========================================================================
 function RealizeTabs()
-	
+
 	if not m_tabs then
 		m_tabs = CreateTabs( Controls.TabContainer, 42, 34, UI.GetColorValueFromHexLiteral(0xFF331D05) );
 	else
@@ -1034,11 +1034,11 @@ function RealizeTabs()
 	m_tabs.AddTab( Controls.ButtonGovernments,	SwitchTabToGovernments );
 	m_tabs.CenterAlignTabs(0);	-- Use negative to create padding as value represents amount to overlap
 	m_tabs.AddAnimDeco(Controls.TabAnim, Controls.TabArrow);
-	
+
 	if IsAbleToChangeGovernment() then
 		Controls.ButtonGovernments:SetText( Locale.Lookup("LOC_GOVT_CHANGE_GOVERNMENTS") );
 	else
-		Controls.ButtonGovernments:SetText( Locale.Lookup("LOC_GOVT_VIEW_GOVERNMENTS") );		
+		Controls.ButtonGovernments:SetText( Locale.Lookup("LOC_GOVT_VIEW_GOVERNMENTS") );
 	end
 
 	if IsAbleToChangePolicies() then
@@ -1058,18 +1058,18 @@ function RealizePolicyCatalog()
 	m_policyCardIM:ResetInstances();
 
 	local isCivilopediaAvailable:boolean = not IsTutorialRunning();
-	local isAbleToChangePolicies:boolean = IsAbleToChangePolicies();	
+	local isAbleToChangePolicies:boolean = IsAbleToChangePolicies();
 
 	for _,policyType in pairs(m_kPolicyCatalogOrder) do
-		
+
 		-- Policy unlocked check and Policy inactive check
 		if (m_kUnlockedPolicies[policyType] and not IsPolicyTypeActive( policyType ) )
 		then
 			local policy:table= m_kPolicyCatalogData[policyType];
 
-			-- Filter check	
+			-- Filter check
 			if (m_kPolicyFilterCurrent == nil or
-				m_kPolicyFilterCurrent.Func == nil or 
+				m_kPolicyFilterCurrent.Func == nil or
 				m_kPolicyFilterCurrent.Func(policy) )
 			then
 				local cardInstance:table = m_policyCardIM:GetInstance();
@@ -1121,10 +1121,10 @@ end
 -- ===========================================================================
 function ToSlotAmtString( value:number )
 	--if value < 1 then return ""; else return tostring(value); end
-	if value < 1 then 
+	if value < 1 then
 		return "[ICON_CHECKMARK]";
-	else 
-		return tostring(value); 
+	else
+		return tostring(value);
 	end
 end
 
@@ -1153,7 +1153,7 @@ end
 function BlockRowsUnableToAccept( strSlotType:string )
 	-- LUA cascade boolean logic to turn slots a darker color if the dragged type
 	-- doesn't support the row or if the row doesn't have any more room in it.
-	
+
 	-- Undo darkening if no type is given.
 	if ( strSlotType == nil ) then
 		Controls.MilitaryBlocker:SetHide(true);
@@ -1162,7 +1162,7 @@ function BlockRowsUnableToAccept( strSlotType:string )
 		Controls.WildcardBlocker:SetHide(true);
 		return;
 	end
-	
+
 	Controls.MilitaryBlocker:SetHide(IsSlotTypeLegalInRow( ROW_INDEX.MILITARY, strSlotType ));
 	Controls.DiplomaticBlocker:SetHide(IsSlotTypeLegalInRow( ROW_INDEX.DIPLOMAT, strSlotType ));
 	Controls.EconomicBlocker:SetHide(IsSlotTypeLegalInRow( ROW_INDEX.ECONOMIC, strSlotType ));
@@ -1280,7 +1280,7 @@ function RealizeActivePoliciesRows()
 	m_ActiveCardInstanceArray = {};	-- Empty policies; will be rebuilt below.
 	for nRowIndex,tRow in ipairs(m_ActivePolicyRows) do
 		local stackControl:table = tStackControls[nRowIndex];
-		for nRowSlotIndex,tSlotData in ipairs(tRow.SlotArray) do			
+		for nRowSlotIndex,tSlotData in ipairs(tRow.SlotArray) do
 			local policyType:string = tSlotData.GC_PolicyType;
 			local cardInst	:table = {};
 			cardInst[KEY_POLICY_SLOT]	= tSlotData.GC_SlotIndex;
@@ -1298,8 +1298,8 @@ function RealizeActivePoliciesRows()
 					cardInst.Button:RegisterMouseEnterCallback( function() PushActiveCardMouseover( cardInst ); end);
 					cardInst.Button:RegisterMouseExitCallback( function() PopActiveCardMouseover( cardInst ); end);
 				end
-				
-				
+
+
 				local fnRemoveCard = function( )
 						RemoveActivePolicyAtSlotIndex( tSlotData.GC_SlotIndex );
 						RealizePolicyCatalog();
@@ -1325,7 +1325,7 @@ function RealizeActivePoliciesRows()
 			m_ActiveCardInstanceArray[tSlotData.GC_SlotIndex+1] = cardInst;
 		end
 	end
-	
+
 	RealizeActivePolicyRowSize();
 
 	-- Update row decorations (counters, tooltips, labels)
@@ -1364,12 +1364,12 @@ function RealizeActivePoliciesRows()
 		ctrlLabelRight:SetShow(hasSlots);
 		ctrlIconRing:SetShow(hasSlots);
 		ctrlCounter:SetColorByName(hasSlots and "Black" or "Clear"); -- Ternary. (hasSlots ? "Black" : "Clear")
-		
+
 		ctrlLabelRight:SetText(ToSlotAmtString(nFreeSlots));
 		ctrlLabelRight:SetToolTipString(ToSlotAmtRemainingTooltipString(nFreeSlots, strTooltip));
 		ctrlIconLeft:SetToolTipString(ToSlotAmtTotalTooltipString(nSlots, strTooltip));
 	end
-	
+
 	-- Had to set these manually because Controls.DiplomaticEmpty is off doing its own thing wrt naming
 	Controls.MilitaryEmpty:SetHide(#m_ActivePolicyRows[ROW_INDEX.MILITARY].SlotArray > 0);
 	Controls.EconomicEmpty:SetHide(#m_ActivePolicyRows[ROW_INDEX.ECONOMIC].SlotArray > 0);
@@ -1389,11 +1389,11 @@ function RealizeActivePoliciesRows()
 	-- Update states for Unlock and Confirm buttons at bottom of screen
 	if (bPoliciesChanged == true) then
 		Controls.ConfirmPolicies:SetHide(true);
-		Controls.UnlockPolicies:SetHide(true);	
+		Controls.UnlockPolicies:SetHide(true);
 	elseif (iPolicyUnlockCost == 0) then
 		Controls.ConfirmPolicies:SetHide(false);
 		Controls.UnlockPolicies:SetHide(true);
-		
+
 		if(not m_isPoliciesChanged or bAnySlotsFree) then
 			Controls.ConfirmPolicies:SetDisabled(true);
 			Controls.ConfirmPolicies:SetText(GetAssignAllPoliciesText());
@@ -1451,7 +1451,7 @@ function EnsureRowContentsFit( nRowIndex:number, tStack:table )
 	local totalSize:number = (GetPolicyCardSizeX() * nSlots) + itemPadding;
 	local nextX:number = (width / 2) - (totalSize / 2);
 	local step:number = GetPolicyCardSizeX() + PADDING_POLICY_ROW_ITEM;
-	
+
 	-- Make items overlap if they don't fit in the stack
 	if(totalSize > width) then
 		nextX = 0;
@@ -1485,11 +1485,11 @@ end
 function Close()
 
 	if ContextPtr:IsHidden() then return; end
-	
+
 	if Controls.ConfirmPolicies:IsVisible() and Controls.ConfirmPolicies:IsEnabled() then
 		-- Policies confirmation button is enabled (and showing); warn player changes are not saved!
 		local popup:table = PopupDialogInGame:new( "WarnUnsavedChanges" );
-		popup:ShowYesNoDialog( TXT_GOV_POPUP_PROMPT_POLICIES_CLOSE, 
+		popup:ShowYesNoDialog( TXT_GOV_POPUP_PROMPT_POLICIES_CLOSE,
 			function() Controls.ConfirmPolicies:SetDisabled(true); Close() end ); -- no-op on cancel
 	else
 		-- Actual close
@@ -1587,9 +1587,9 @@ end
 --	Pay gold to unlock the ability to change policies
 -- ===========================================================================
 function OnUnlockPolicies()
- 
+
 	local tParameters = {};
-	UI.RequestPlayerOperation(Game.GetLocalPlayer(), PlayerOperations.UNLOCK_POLICIES, tParameters);	
+	UI.RequestPlayerOperation(Game.GetLocalPlayer(), PlayerOperations.UNLOCK_POLICIES, tParameters);
 	RefreshAllData();
 	Controls.ButtonPolicies:SetText( Locale.Lookup("LOC_GOVT_CHANGE_POLICIES") );
 	UI.PlaySound("UI_Unlock_Government");
@@ -1600,9 +1600,9 @@ end
 --	Pay gold to unlock the ability to change governments
 -- ===========================================================================
 function OnUnlockGovernments()
- 
+
 	local tParameters = {};
-	UI.RequestPlayerOperation(Game.GetLocalPlayer(), PlayerOperations.UNLOCK_POLICIES, tParameters);	
+	UI.RequestPlayerOperation(Game.GetLocalPlayer(), PlayerOperations.UNLOCK_POLICIES, tParameters);
 	RefreshAllData();
 	Controls.ButtonPolicies:SetText( Locale.Lookup("LOC_GOVT_CHANGE_POLICIES") );
 	UI.PlaySound("UI_Unlock_Government");
@@ -1684,7 +1684,7 @@ function OnOpenGovernmentScreenPolicies()
 		OnOpenGovernmentScreen( SCREEN_ENUMS.GOVERNMENTS );
 	else
 		OnOpenGovernmentScreen( SCREEN_ENUMS.POLICIES );
-	end	
+	end
 end
 
 
@@ -1708,13 +1708,13 @@ function OnOpenGovernmentScreen( screenEnum:number )
 		else
 			m_currentCivicType = nil;
 		end
-	
+
 		-- From Civ6_styles: FullScreenVignetteConsumer
 		Controls.ScreenAnimIn:SetToBeginning();
 		Controls.ScreenAnimIn:Play();
 
 		-- If not explicity screenEnumeration is passed in, use smart logic.
-		if screenEnum == nil then 
+		if screenEnum == nil then
 			if IsAbleToChangePolicies() then
 				if table.count(m_kUnlockedGovernments) > 0 then
 					screenEnum = SCREEN_ENUMS.GOVERNMENTS;
@@ -1726,11 +1726,11 @@ function OnOpenGovernmentScreen( screenEnum:number )
 			end
 		end
 
-		if screenEnum == SCREEN_ENUMS.MY_GOVERNMENT then 
+		if screenEnum == SCREEN_ENUMS.MY_GOVERNMENT then
 			m_tabs.SelectTab( Controls.ButtonMyGovernment );
-		elseif screenEnum == SCREEN_ENUMS.GOVERNMENTS		then 
+		elseif screenEnum == SCREEN_ENUMS.GOVERNMENTS		then
 			m_tabs.SelectTab( Controls.ButtonGovernments );
-		else 
+		else
 			m_tabs.SelectTab( Controls.ButtonPolicies );
 		end
 
@@ -1754,7 +1754,7 @@ function SwitchTab( tabFrom, tabTo, bForce )
 
 	Controls.PolicyInputShield:SetConsumeMouseButton( isInputConsumed );
 	Controls.CatalogInputShield:SetHide( isEditOn );
-	
+
 	-- For visible EmptyCards, add the drag instruction text!
 	for _,tCardInst in ipairs(m_ActiveCardInstanceArray) do
 		if ( tCardInst.DragPolicyLabel ~= nil ) then
@@ -1765,7 +1765,7 @@ function SwitchTab( tabFrom, tabTo, bForce )
 	if ( tabFrom == tabTo and (bForce == nil or not bForce) ) then
 		return; -- No change, we don't care.
 	end
-	
+
 	-- If this "switch" is actually someone straight opening the window, jump directly to what they want
 	local isDirectOpen:boolean = ContextPtr:IsHidden()
 
@@ -1777,10 +1777,10 @@ function SwitchTab( tabFrom, tabTo, bForce )
 	local isToMyGovt = (tabTo == Controls.ButtonMyGovernment);
 	local isToGovts = (tabTo == Controls.ButtonGovernments);
 	local isFromGovts = (tabFrom == Controls.ButtonGovernments);
-	
+
 	-- Thingy that appears, but only on govts tab
 	Controls.PolicyPanelGrid:SetHide( not isToGovts );
-	
+
 	-- Animation: Make sure 'selected' overlay on the correct tab button is visible and fade it in.
 	Controls.SelectMyGovernment:SetHide( not isToMyGovt );
 	Controls.SelectPolicies:SetHide( not isToPolicies );
@@ -1797,7 +1797,7 @@ function SwitchTab( tabFrom, tabTo, bForce )
 		Controls.SelectGovernments:SetToBeginning();
 		Controls.SelectGovernments:Play();
 	end
-	
+
 	-- Animation: Alpha blend between policystuff and govts
 	if ( isFromGovts or isToGovts ) then
 		-- Fade for govts. isToGovts wants to reveal this. Reverse-mode is hiding. So therefore...
@@ -1813,12 +1813,12 @@ function SwitchTab( tabFrom, tabTo, bForce )
 		-- Play away! These do nothing if they're already where they need to be.
 		Controls.GovernmentTree:Play();
 		Controls.AlphaAnim:Play();
-		
+
 		-- Also, uh, make sure we can see what's going on.
 		-- If we're in this section, it's guaranteed that we're going between policystuff and govts.
 		Controls.GovernmentTree:SetHide(false);
 		Controls.AlphaAnim:SetHide(false);
-		
+
 		-- Short circuit for timely presentation!
 		if ( isDirectOpen ) then
 			Controls.GovernmentTree:SetProgress(1);
@@ -1831,7 +1831,7 @@ function SwitchTab( tabFrom, tabTo, bForce )
 		Controls.AlphaAnim:SetHide(false); -- This should definitely be visible.
 		Controls.AlphaAnim:Stop(); -- And probably not animating
 		Controls.AlphaAnim:SetToBeginning(); -- "CAN'T TOUCH XML" note: AlphaAnim goes from 1 to 0, thus begins visible (unlike GovernmentTree)
-		
+
 		-- Slide to catalog. isToMyGovt wants no catalog. Reversing shows catalog. So therefore...
 		if ( isToMyGovt == Controls.RowAnim:IsReversing() ) then
 			Controls.RowAnim:Reverse();
@@ -1843,7 +1843,7 @@ function SwitchTab( tabFrom, tabTo, bForce )
 			Controls.RowAnim:SetProgress(1);
 		end
 	end
-	
+
 	Controls.MilitaryCounter:SetHide( not isToPolicies );
 	Controls.EconomicCounter:SetHide( not isToPolicies );
 	Controls.DiplomacyCounter:SetHide( not isToPolicies );
@@ -1874,12 +1874,12 @@ end
 -- ===========================================================================
 function SwitchTabToGovernments()
 	SwitchTab( m_tabs.prevSelectedControl, Controls.ButtonGovernments );
-	
+
 	RealizeGovernmentsPage();
 end
 
 -- ===========================================================================
---	
+--
 -- ===========================================================================
 function RefreshAllData()
 	PopulateLivePlayerData( m_ePlayer );
@@ -1958,6 +1958,12 @@ function OnCivicsUnlocked()
 	end
 end
 
+function OnCivicCompleted( ePlayer:number, eCivic:number )
+	if ePlayer == Game.GetLocalPlayer() then
+    OnGovernmentChanged( ePlayer );
+	end
+end
+
 -- ===========================================================================
 --	Game Engine Event
 -- ===========================================================================
@@ -2029,7 +2035,7 @@ function GetCurrentDragTargetInst( nDropRow:number, pDraggedControl:table, strDr
 	if not IsPolicyTypeLegalInRow( nDropRow, strDraggedCardPolicyType ) then
 		return nil;
 	end
-	
+
 	-- If know there's space in the row, just pick an open slot!
 	local nFreeSlot :number = GetFirstFreeSlotIndex( nDropRow );
 	if nFreeSlot ~= -1 then
@@ -2063,7 +2069,7 @@ function OnDragFromCatalog(dragStruct:table, cardInstance:table )
 	local dragControl:table  = dragStruct:GetControl();
 	local policyType :string = cardInstance[KEY_POLICY_TYPE];
 	local nTargetRow :number = GetCurrentDragTargetRowIndex( dragControl, policyType );
-	
+
 	local tAcceptableTarget	 :table = nil;
 
 	if nTargetRow ~= -1 then
@@ -2103,7 +2109,7 @@ function OnDropFromCatalog( dragStruct:table, cardInstance:table )
 			end
 		end
 	end
-	
+
 	HighlightActiveCard_DropTarget( nil );
 	BlockRowsUnableToAccept( nil ); -- Turns back dark rows
 
@@ -2146,7 +2152,7 @@ function AddToNextAvailRow( cardInstance:table )
 	end
 	-- This hits only if SOMEONE in the above stack resolved true.
 	m_isPoliciesChanged = true;
-	RealizePolicyCatalog();	
+	RealizePolicyCatalog();
 	RealizeActivePoliciesRows();
 end
 
@@ -2154,8 +2160,8 @@ end
 -- ===========================================================================
 --	Start dragging a card that exists in a row.
 -- ===========================================================================
-function OnStartDragFromRow( dragStruct:table, cardInstance:table )	
-	cardInstance.Shadow:SetHide(false);	
+function OnStartDragFromRow( dragStruct:table, cardInstance:table )
+	cardInstance.Shadow:SetHide(false);
 	UI.PlaySound("UI_Policies_Card_Take");
 
 	local policyType :string = cardInstance[KEY_POLICY_TYPE];
@@ -2164,11 +2170,11 @@ end
 
 
 -- ===========================================================================
---	Finish dragging a card out of a row 
+--	Finish dragging a card out of a row
 --	Will either snap back, replace a card in another row, or go back into
 --	the catalog.
 -- ===========================================================================
-function OnDropFromRow( dragStruct:table, cardInstance:table )	
+function OnDropFromRow( dragStruct:table, cardInstance:table )
 	local dragControl:table  = dragStruct:GetControl();
 	local policyType :string = cardInstance[KEY_POLICY_TYPE];
 	local nTargetRow :number = GetCurrentDragTargetRowIndex( dragControl, policyType );
@@ -2176,7 +2182,7 @@ function OnDropFromRow( dragStruct:table, cardInstance:table )
 	cardInstance.Shadow:SetHide( true );
 	UI.PlaySound("UI_Policies_Card_Drop");
 
-	local bCardMoved:boolean = false;	
+	local bCardMoved:boolean = false;
 
 	-- If we weren't dragged to a row that accepts this card type...
 	if nTargetRow == -1 then
@@ -2204,7 +2210,7 @@ function OnDropFromRow( dragStruct:table, cardInstance:table )
 					bCardMoved = true;
 				end
 			end
-		end		
+		end
 	end
 
 	if bCardMoved then
@@ -2222,9 +2228,9 @@ end
 --	RETURNS: true if policy is available to the player at this time.
 -- ===========================================================================
 function IsPolicyAvailable( kPlayerCulture:table, policyHash:number )
-	local isPolicyUnlocked	:boolean = kPlayerCulture:IsPolicyUnlocked( policyHash ) 
+	local isPolicyUnlocked	:boolean = kPlayerCulture:IsPolicyUnlocked( policyHash )
 	local isRelevant		:boolean = not kPlayerCulture:IsPolicyObsolete( policyHash );
-	
+
 	return isPolicyUnlocked and isRelevant;
 end
 
@@ -2253,7 +2259,7 @@ function PopulateLivePlayerData( ePlayer:number )
 	else
 		g_kCurrentGovernment = nil;
 	end
-	
+
 	-- Cache which civic was unlocked this turn, so we can determine whether to display new policy icons
 	local civicCompletedThisTurn:string;
 	if kPlayerCulture:CivicCompletedThisTurn() then
@@ -2263,7 +2269,7 @@ function PopulateLivePlayerData( ePlayer:number )
 			civicCompletedThisTurn = civicInfo.CivicType;
 		end
 	end
-	
+
 	-- Policies: populate unlocked (and not obsolete) ones for the catalog
 	m_kUnlockedPolicies = {};
 	m_kNewPoliciesThisTurn = {};
@@ -2273,14 +2279,14 @@ function PopulateLivePlayerData( ePlayer:number )
 		m_kUnlockedPolicies[policyType] = isPolicyAvailable or m_debugShowAllPolicies;
 		m_kNewPoliciesThisTurn[policyType] = civicCompletedThisTurn and civicCompletedThisTurn == row.PrereqCivic;
 	end
-	
+
 	m_ActivePoliciesByType = {};
 	m_ActivePoliciesBySlot = {};
 	m_ActivePolicyRows[ROW_INDEX.MILITARY] = { SlotArray={} };
 	m_ActivePolicyRows[ROW_INDEX.ECONOMIC] = { SlotArray={} };
 	m_ActivePolicyRows[ROW_INDEX.DIPLOMAT] = { SlotArray={} };
 	m_ActivePolicyRows[ROW_INDEX.WILDCARD] = { SlotArray={} };
-	
+
 	local nPolicySlots:number = kPlayerCulture:GetNumPolicySlots();
 	for i = 0, nPolicySlots-1, 1 do
 		local iSlotType :number = kPlayerCulture:GetSlotType(i);
@@ -2290,7 +2296,7 @@ function PopulateLivePlayerData( ePlayer:number )
 		-- strSlotType is of the form SLOT_##NAME##, and we want only the first 8 chars of ##NAME##
 		local strRowKey :string = string.sub( strSlotType, 6, 13 );
 		local nRowIndex :number = ROW_INDEX[strRowKey];
-		
+
 		if ( nRowIndex == nil ) then
 				assert( false );
 			UI.DataError("On initialization; slot type '"..strSlotType.."' requires key '"..strRowKey.."'");
@@ -2325,14 +2331,14 @@ function PopulateLivePlayerData( ePlayer:number )
 			m_kBonuses[governmentType] = {
 				BonusPercent			= government.BonusFlatAmountPreview
 			}
-		end	
+		end
 	end
-	
+
 	-- Unlocked governments
 	m_kUnlockedGovernments = {};
 	for governmentType,government in pairs(g_kGovernments) do
 		if kPlayerCulture:IsGovernmentUnlocked(government.Hash) then
-			m_kUnlockedGovernments[governmentType] = true;			
+			m_kUnlockedGovernments[governmentType] = true;
 		end
 	end
 
@@ -2355,7 +2361,7 @@ function DebugOutput()
 				governmentType,
 				government.Index,
 				government.Hash
-			));			
+			));
 		end
 	end
 end
@@ -2363,7 +2369,7 @@ end
 
 -- ===========================================================================
 --	Save the current data of a player (values that are UI specific that
---	can't be queried and (re-)populated from the game engine when this 
+--	can't be queried and (re-)populated from the game engine when this
 --	player's next turn starts.
 --	Mostly (only?) valid for local multiplayer hotseat.
 -- ===========================================================================
@@ -2402,17 +2408,17 @@ function PopulateStaticData()
 		local slotType			:string = row.GovernmentSlotType;
 		local description		:string = Locale.Lookup(row.Description);
 		--local draftCost			:number = kPlayerCulture:GetEnactPolicyCost(policyTypeHash);	--Move to live data
-	
-		m_kPolicyCatalogData[row.PolicyType] = {			
-			Description = description, 
-			Name		= policyName, 
-			PolicyHash	= policyTypeHash, 
+
+		m_kPolicyCatalogData[row.PolicyType] = {
+			Description = description,
+			Name		= policyName,
+			PolicyHash	= policyTypeHash,
 			SlotType	= slotType,			-- SLOT_MILITARY, SLOT_ECONOMIC, SLOT_DIPLOMATIC, SLOT_WILDCARD, (SLOT_GREAT_PERSON)
 			UniqueID	= row.Index			-- the row this policy exists in, is guaranteed to be unique (as-is the house, but these are readable. ;) )
 			};
 
 		table.insert(m_kPolicyCatalogOrder, row.PolicyType);
-	end	
+	end
 
 	table.sort(m_kPolicyCatalogOrder, SortPolicies );
 
@@ -2553,9 +2559,9 @@ function PopulatePolicyFilterData()
 	table.insert( m_kPolicyFilters, { Func=diplomaticFilter,	Description="LOC_GOVT_FILTER_DIPLOMATIC"	} );
 	table.insert( m_kPolicyFilters, { Func=wildcardFilter,		Description="LOC_GOVT_FILTER_GREAT_PERSON"	} );
 
-	for i,filter in ipairs(m_kPolicyFilters) do		
+	for i,filter in ipairs(m_kPolicyFilters) do
 		local filterLabel	 :string = Locale.Lookup( filter.Description );
-		local controlTable	 :table	 = {};       
+		local controlTable	 :table	 = {};
 		Controls.FilterPolicyPulldown:BuildEntry( "FilterPolicyItemInstance", controlTable );
 		controlTable.DescriptionText:SetText( filterLabel );
 		controlTable.Button:RegisterCallback( Mouse.eLClick,  function() OnPolicyFilterClicked(filter); end );
@@ -2571,7 +2577,7 @@ end
 -- Update the Policy Filter text with the current label.
 -- ===========================================================================
 function RealizePolicyFilterPulldown()
-	local pullDownButton :table = Controls.FilterPolicyPulldown:GetButton();	
+	local pullDownButton :table = Controls.FilterPolicyPulldown:GetButton();
 	if m_kPolicyFilterCurrent == nil or m_kPolicyFilterCurrent.Func== nil then
 		pullDownButton:SetText( "  "..Locale.Lookup("LOC_GOVT_FILTER_W_DOTS"));
 	else
@@ -2585,7 +2591,7 @@ end
 --	filter,	the filter object to use (or NIL for none)
 -- ===========================================================================
 function OnPolicyFilterClicked( filter:table )
-	m_kPolicyFilterCurrent = filter;	
+	m_kPolicyFilterCurrent = filter;
 	RealizePolicyFilterPulldown();
 	RealizePolicyCatalog();
 end
@@ -2670,10 +2676,10 @@ end
 -- ===========================================================================
 function LateInitialize()
 	m_TopPanelConsideredHeight = Controls.Vignette:GetSizeY() - TOP_PANEL_OFFSET;
-	
+
 	PopulateStaticData();			-- Obtain unchanging, static data from game core
 	PopulatePolicyFilterData();		-- Filter support
-	
+
 	m_ePlayer = Game.GetLocalPlayer();
 	RealizeTabs();
 	Resize();
@@ -2685,8 +2691,8 @@ end
 function OnInit( isReload:boolean )
 	LateInitialize();
 	if isReload then
-		LuaEvents.GameDebug_GetValues( "GovernmentScreen" );		
-	end	
+		LuaEvents.GameDebug_GetValues( "GovernmentScreen" );
+	end
 end
 
 -- ===========================================================================
@@ -2698,8 +2704,8 @@ function OnShutdown()
 	LuaEvents.GameDebug_Return.Remove( OnGameDebugReturn );
 	LuaEvents.NotificationPanel_GovernmentOpenGovernments.Remove( OnOpenGovernmentScreenGovernments );
 	LuaEvents.NotificationPanel_GovernmentOpenPolicies.Remove( OnOpenGovernmentScreenPolicies );
-	LuaEvents.LaunchBar_GovernmentOpenMyGovernment.Remove( OnOpenGovernmentScreenMyGovernment );	
-	LuaEvents.LaunchBar_GovernmentOpenGovernments.Remove( OnOpenGovernmentScreenGovernments );	
+	LuaEvents.LaunchBar_GovernmentOpenMyGovernment.Remove( OnOpenGovernmentScreenMyGovernment );
+	LuaEvents.LaunchBar_GovernmentOpenGovernments.Remove( OnOpenGovernmentScreenGovernments );
 	LuaEvents.TechCivicCompletedPopup_GovernmentOpenGovernments.Remove( OnOpenGovernmentScreenGovernments );
 	LuaEvents.TechCivicCompletedPopup_GovernmentOpenPolicies.Remove( OnOpenGovernmentScreenPolicies );
 	LuaEvents.Advisor_GovernmentOpenPolicies.Remove( OnOpenGovernmentScreenPolicies );
@@ -2707,11 +2713,11 @@ function OnShutdown()
 	-- Cache values for hotloading...
 	local eOpenTabAtInit = nil;
 	if ( ContextPtr:IsVisible() ) then
-		if m_tabs.selectedControl == Controls.ButtonMyGovernment then 
+		if m_tabs.selectedControl == Controls.ButtonMyGovernment then
 			eOpenTabAtInit = SCREEN_ENUMS.MY_GOVERNMENT;
-		elseif m_tabs.selectedControl == Controls.ButtonGovernments then 
+		elseif m_tabs.selectedControl == Controls.ButtonGovernments then
 			eOpenTabAtInit = SCREEN_ENUMS.GOVERNMENTS;
-		else 
+		else
 			eOpenTabAtInit = SCREEN_ENUMS.POLICIES;
 		end
 	end
@@ -2724,7 +2730,7 @@ end
 -- ===========================================================================
 function OnGameDebugReturn( context:string, contextTable:table )
 	if context == "GovernmentScreen" and contextTable then
-		local eOpenTabAtInit:number = contextTable["eOpenTabAtInit"]; 
+		local eOpenTabAtInit:number = contextTable["eOpenTabAtInit"];
 		if eOpenTabAtInit ~= nil and OnOpenGovernmentScreen ~= nil then
 			OnOpenGovernmentScreen(eOpenTabAtInit);
 		end
@@ -2756,7 +2762,7 @@ end
 --	CTOR
 -- ===========================================================================
 function Initialize()
-	
+
 	Controls.LabelMilitary:SetText(Locale.Lookup("{LOC_GOVT_POLICY_TYPE_MILITARY:upper}"));
 	Controls.LabelEconomic:SetText(Locale.Lookup("{LOC_GOVT_POLICY_TYPE_ECONOMIC:upper}"));
 	Controls.LabelDiplomatic:SetText(Locale.Lookup("{LOC_GOVT_POLICY_TYPE_DIPLOMATIC:upper}"));
@@ -2773,7 +2779,7 @@ function Initialize()
     Controls.ButtonMyGovernment:RegisterCallback(	Mouse.eMouseEnter, function() UI.PlaySound("Main_Menu_Mouse_Over"); end);
     Controls.ButtonPolicies:RegisterCallback(		Mouse.eMouseEnter, function() UI.PlaySound("Main_Menu_Mouse_Over"); end);
     Controls.ButtonGovernments:RegisterCallback(	Mouse.eMouseEnter, function() UI.PlaySound("Main_Menu_Mouse_Over"); end);
-	
+
 	Controls.BackButton:RegisterCallback(Mouse.eMouseEnter, function() UI.PlaySound("Main_Menu_Mouse_Over"); end);
 	Controls.BackButton:RegisterCallback(Mouse.eLClick, OnFilterBack);
 	Controls.ForwardButton:RegisterCallback(Mouse.eMouseEnter, function() UI.PlaySound("Main_Menu_Mouse_Over"); end);
@@ -2788,7 +2794,7 @@ function Initialize()
 	Controls.UnlockPolicies:RegisterCallback(		Mouse.eMouseEnter, function() UI.PlaySound("Main_Menu_Mouse_Over"); end);
 	Controls.UnlockGovernments:RegisterCallback(	Mouse.eLClick,	OnUnlockGovernments);
 	Controls.UnlockGovernments:RegisterCallback(	Mouse.eMouseEnter, function() UI.PlaySound("Main_Menu_Mouse_Over"); end);
-	
+
 	-- Hide these after going invisible to prevent input
 	Controls.GovernmentTree:RegisterEndCallback( function()
 			if Controls.GovernmentTree:IsReversing() then
@@ -2808,10 +2814,11 @@ function Initialize()
 	Controls.ModalBG:SetHide(true);
 
 	Controls.PolicyPanelHeaderLabel:SetText(Locale.ToUpper("LOC_TREE_OPTIONS"));
-				
+
 
 	-- Gamecore	EVENTS
 	Events.CivicsUnlocked.Add( OnCivicsUnlocked );
+	Events.CivicCompleted.Add(			OnCivicCompleted );
 	Events.GovernmentChanged.Add( OnGovernmentChanged );
 	Events.GovernmentPolicyChanged.Add( OnGovernmentPolicyChanged );
 	Events.GovernmentPolicyObsoleted.Add( OnGovernmentPolicyChanged );
@@ -2825,8 +2832,8 @@ function Initialize()
 	LuaEvents.GameDebug_Return.Add( OnGameDebugReturn );
 	LuaEvents.NotificationPanel_GovernmentOpenGovernments.Add( OnOpenGovernmentScreenGovernments );
 	LuaEvents.NotificationPanel_GovernmentOpenPolicies.Add( OnOpenGovernmentScreenPolicies );
-	LuaEvents.LaunchBar_GovernmentOpenMyGovernment.Add( OnOpenGovernmentScreenMyGovernment );	
-	LuaEvents.LaunchBar_GovernmentOpenGovernments.Add( OnOpenGovernmentScreenGovernments );	
+	LuaEvents.LaunchBar_GovernmentOpenMyGovernment.Add( OnOpenGovernmentScreenMyGovernment );
+	LuaEvents.LaunchBar_GovernmentOpenGovernments.Add( OnOpenGovernmentScreenGovernments );
 	LuaEvents.TechCivicCompletedPopup_GovernmentOpenGovernments.Add( OnOpenGovernmentScreenGovernments );
 	LuaEvents.TechCivicCompletedPopup_GovernmentOpenPolicies.Add( OnOpenGovernmentScreenPolicies );
 	LuaEvents.Advisor_GovernmentOpenPolicies.Add( OnOpenGovernmentScreenPolicies );
@@ -2835,6 +2842,6 @@ end
 if HasCapability("CAPABILITY_GOVERNMENTS_VIEW") then
 	Initialize();
 end
-	
+
 
 

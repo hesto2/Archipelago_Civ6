@@ -69,6 +69,7 @@ def generate_modinfo(multiworld: MultiWorld) -> str:
     <File>ArchipelagoRunner.lua</File>
     <File>ArchipelagoIcons.xml</File>
     <File>AllowBuildObsolete.sql</File>
+    <File>GovernmentScreen.lua</File>
   </Files>
   <InGameActions>
     <UpdateDatabase id="ArchipelagoItems">
@@ -94,8 +95,9 @@ def generate_modinfo(multiworld: MultiWorld) -> str:
       <File>TechTree.xml</File>
       <File>CivicsTree.lua</File>
       <File>CivicsTree.xml</File>
-
       <File>TechTreeNode.xml</File>
+
+      <File>GovernmentScreen.lua</File>
     </ImportFiles>
     <ReplaceUIScript id="Archipelago_ResearchChooser">
       <Properties>
@@ -123,6 +125,13 @@ def generate_modinfo(multiworld: MultiWorld) -> str:
         <LoadOrder>150003</LoadOrder>
         <LuaContext>CivicsTree</LuaContext>
         <LuaReplace>CivicsTree.lua</LuaReplace>
+      </Properties>
+    </ReplaceUIScript>
+    <ReplaceUIScript id="Archipelago_GovernmentScreen">
+      <Properties>
+        <LoadOrder>150004</LoadOrder>
+        <LuaContext>GovernmentScreen</LuaContext>
+        <LuaReplace>GovernmentScreen.lua</LuaReplace>
       </Properties>
     </ReplaceUIScript>
 
