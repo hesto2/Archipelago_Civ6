@@ -68,6 +68,7 @@ def generate_modinfo(multiworld: MultiWorld) -> str:
     <File>TechTreeNode.xml</File>
     <File>ArchipelagoRunner.lua</File>
     <File>ArchipelagoIcons.xml</File>
+    <File>AllowBuildObsolete.sql</File>
   </Files>
   <InGameActions>
     <UpdateDatabase id="ArchipelagoItems">
@@ -75,8 +76,10 @@ def generate_modinfo(multiworld: MultiWorld) -> str:
       <Properties>
         <LoadOrder>212</LoadOrder>
       </Properties>
-
       <File>NewPrereqs.xml</File>
+    </UpdateDatabase>
+    <UpdateDatabase id="ArchipelagoObsoleteUnits">
+      <File>AllowBuildObsolete.sql</File>
     </UpdateDatabase>
     <ImportFiles id="ArchipelagoReplacers">
       <Properties>
