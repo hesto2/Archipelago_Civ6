@@ -7,8 +7,8 @@ from CommonClient import ClientCommandProcessor, CommonContext, get_base_parser,
 from NetUtils import ClientStatus, NetworkItem
 import Utils
 from worlds.civ_6.CivVIInterface import CivVIInterface
-from worlds.civ_6.Items import CivVIItemData, generate_item_table
-from worlds.civ_6.Locations import generate_location_table
+from worlds.civ_6.Items import CivVIItemData, generate_item_by_era_table
+from worlds.civ_6.Locations import generate_era_location_table
 from worlds.civ_6.TunerClient import TunerErrorException
 
 
@@ -48,8 +48,8 @@ class CivVIContext(CommonContext):
     def __init__(self, server_address, password):
         super().__init__(server_address, password)
         self.game_interface = CivVIInterface(logger)
-        location_by_era = generate_location_table()
-        item_by_era = generate_item_table()
+        location_by_era = generate_era_location_table()
+        item_by_era = generate_item_by_era_table()
 
         # Get tables formatted in a way that is easier to use here
         for era, locations in location_by_era.items():

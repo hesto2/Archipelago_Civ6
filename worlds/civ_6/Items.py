@@ -37,7 +37,21 @@ class CivVIItemData:
         self.item_type = item_type
 
 
-def generate_item_table():
+def generate_flat_item_table():
+    """
+    Generates a flat item table using the data from existing_tech.json and existing_civics.json.
+    The table is a dictionary with item names as keys and CivVIItemData objects as values.
+    """
+
+    era_items = generate_item_by_era_table()
+    flat_items = {}
+    for era_type, era_items in era_items.items():
+        for item_id, item_data in era_items.items():
+            flat_items[item_id] = item_data
+    return flat_items
+
+
+def generate_item_by_era_table():
     """
     Uses the data from existing_tech.json to generate a location table in the following format:
     {
@@ -69,7 +83,7 @@ def generate_item_table():
             tech["Type"], id_base, tech["Cost"], CivVICheckType.TECH)
         id_base += 1
 
-  # Generate Civics
+    # Generate Civics
     existing_civics_path = os.path.join(
         current_directory, 'data', 'existing_civics.json')
     civic_id_base = 0

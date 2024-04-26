@@ -1394,7 +1394,7 @@ function RealizeActivePoliciesRows()
 		Controls.ConfirmPolicies:SetHide(false);
 		Controls.UnlockPolicies:SetHide(true);
 
-		if(not m_isPoliciesChanged or bAnySlotsFree) then
+		if(not m_isPoliciesChanged) then
 			Controls.ConfirmPolicies:SetDisabled(true);
 			Controls.ConfirmPolicies:SetText(GetAssignAllPoliciesText());
 		else
