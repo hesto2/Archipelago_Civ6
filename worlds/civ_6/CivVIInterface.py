@@ -38,6 +38,11 @@ class CivVIInterface:
         command = "Resync()"
         await self.tuner.send_game_command(command)
 
+    async def check_victory(self) -> bool:
+        command = "ClientGetVictory()"
+        result = await self.tuner.send_game_command(command)
+        return result == "true"
+
     async def get_checked_locations(self) -> List[str]:
         command = "GetUnsentCheckedLocations()"
         result = await self.tuner.send_game_command(command, 1024 * 4)

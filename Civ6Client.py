@@ -119,6 +119,7 @@ async def handle_checked_location(ctx: CivVIContext):
 
 
 async def handle_receive_items(ctx: CivVIContext, last_received_index_override: int = None):
+  try:
     last_received_index = last_received_index_override or await ctx.game_interface.get_last_received_index()
     if len(ctx.items_received) - last_received_index > 1:
         logger.debug("Multiple items received")
@@ -133,13 +134,17 @@ async def handle_receive_items(ctx: CivVIContext, last_received_index_override: 
     if ctx.processing_multiple_items:
         logger.debug("DONE")
     ctx.processing_multiple_items = False
+  finally:
+    # If something errors out, then unblock item processing
+    ctx.processing_multiple_items = False
 
 
 async def handle_check_goal_complete(ctx: CivVIContext):
-  # TODO: Implement goal completion handling
     # logger.debug("Sending Goal Complete")
-    # await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
-    pass
+    result = await ctx.game_interface.check_victory()
+    if result:
+      logger.info("Sending Victory to server!")
+      await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
 
 
 async def handle_check_deathlink(ctx: CivVIContext):

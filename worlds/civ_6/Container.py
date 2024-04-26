@@ -70,6 +70,7 @@ def generate_modinfo(multiworld: MultiWorld) -> str:
     <File>ArchipelagoIcons.xml</File>
     <File>AllowBuildObsolete.sql</File>
     <File>GovernmentScreen.lua</File>
+    <File>ActionPanel.lua</File>
   </Files>
   <InGameActions>
     <UpdateDatabase id="ArchipelagoItems">
@@ -77,10 +78,12 @@ def generate_modinfo(multiworld: MultiWorld) -> str:
       <Properties>
         <LoadOrder>212</LoadOrder>
       </Properties>
+
       <File>NewPrereqs.xml</File>
     </UpdateDatabase>
     <UpdateDatabase id="ArchipelagoObsoleteUnits">
       <File>AllowBuildObsolete.sql</File>
+
     </UpdateDatabase>
     <ImportFiles id="ArchipelagoReplacers">
       <Properties>
@@ -98,6 +101,8 @@ def generate_modinfo(multiworld: MultiWorld) -> str:
       <File>TechTreeNode.xml</File>
 
       <File>GovernmentScreen.lua</File>
+      <File>ActionPanel.lua</File>
+
     </ImportFiles>
     <ReplaceUIScript id="Archipelago_ResearchChooser">
       <Properties>
@@ -132,6 +137,13 @@ def generate_modinfo(multiworld: MultiWorld) -> str:
         <LoadOrder>150004</LoadOrder>
         <LuaContext>GovernmentScreen</LuaContext>
         <LuaReplace>GovernmentScreen.lua</LuaReplace>
+      </Properties>
+    </ReplaceUIScript>
+    <ReplaceUIScript id="Archipelago_ActionPanel">
+      <Properties>
+        <LoadOrder>150005</LoadOrder>
+        <LuaContext>ActionPanel</LuaContext>
+        <LuaReplace>ActionPanel.lua</LuaReplace>
       </Properties>
     </ReplaceUIScript>
 

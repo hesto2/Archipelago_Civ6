@@ -150,6 +150,18 @@ function OnCivicComplete(playerID, civicID)
     print("END OnCivicComplete")
 end
 
+function OnTeamVictory(teamID, victoryType, eventID)
+    print("START OnTeamVictory")
+    Game.SetProperty("Victory", "true")
+    print("END OnTeamVictory")
+end
+
+-- CLIENT FUNCTION
+function ClientGetVictory()
+    victory = Game.GetProperty("Victory") or "false"
+    return CLIENT_PREFIX .. victory .. CLIENT_POSTFIX
+end
+
 function Init()
     print("Running Main")
     print("Adding turn begin")
@@ -157,6 +169,7 @@ function Init()
     Events.TurnBegin.Add(OnTurnBegin);
     Events.ResearchCompleted.Add(OnResearchComplete)
     Events.CivicCompleted.Add(OnCivicComplete)
+    Events.TeamVictory.Add(OnTeamVictory)
 
     -- Initialize the techs
     TECHS = DB.Query("Select * FROM Technologies")
@@ -213,3 +226,4 @@ Game.GetUnsentCheckedLocations = GetUnsentCheckedLocations
 Game.IsInGame = IsInGame
 Game.ClientGetLastReceivedIndex = ClientGetLastReceivedIndex
 Game.Resync = Resync
+Game.ClientGetVictory = ClientGetVictory
