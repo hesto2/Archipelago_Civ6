@@ -1,7 +1,7 @@
 from enum import Enum
 import json
 import os
-from typing import Dict
+from typing import Dict, List
 from BaseClasses import Item, ItemClassification
 from worlds.civ_6.Enum import CivVICheckType
 CIV_VI_AP_ITEM_ID_BASE = 5041000
@@ -28,7 +28,7 @@ class CivVIItemData:
     cost: int
     item_type: CivVICheckType
 
-    def __init__(self, name, civ_vi_id: int, cost: int,  item_type: CivVICheckType, id_offset: int = 0, classification: ItemClassification = ItemClassification.progression,):
+    def __init__(self, name, civ_vi_id: int, cost: int,  item_type: CivVICheckType, id_offset: int = 0, classification: ItemClassification = ItemClassification.useful,):
         self.classification = classification
         self.civ_vi_id = civ_vi_id
         self.name = name
@@ -72,6 +72,15 @@ def generate_item_by_era_table():
 
     with open(existing_tech_path) as f:
         existing_techs = json.load(f)
+
+    file_path = os.path.join(os.path.dirname(
+        __file__), 'data/era_required_items.json')
+    required_items: List[str] = []
+    with open(file_path) as file:
+        era_required_items = json.load(file)
+        for key, value in era_required_items.items():
+            required_items += value
+
     era_items = {}
 
     id_base = 0
@@ -79,8 +88,12 @@ def generate_item_by_era_table():
         era_type = tech['EraType']
         if era_type not in era_items:
             era_items[era_type] = {}
+
+        classification = ItemClassification.progression if tech[
+            "Type"] in required_items else ItemClassification.useful
         era_items[era_type][tech["Type"]] = CivVIItemData(
-            tech["Type"], id_base, tech["Cost"], CivVICheckType.TECH)
+            tech["Type"], id_base, tech["Cost"], CivVICheckType.TECH, 0, classification)
+
         id_base += 1
 
     # Generate Civics
@@ -93,8 +106,12 @@ def generate_item_by_era_table():
         era_type = civic['EraType']
         if era_type not in era_items:
             era_items[era_type] = {}
+
+        classification = ItemClassification.progression if civic[
+            "Type"] in required_items else ItemClassification.useful
         era_items[era_type][civic["Type"]] = CivVIItemData(
-            civic["Type"], civic_id_base, civic["Cost"], CivVICheckType.CIVIC, id_base)
+            civic["Type"], civic_id_base, civic["Cost"], CivVICheckType.CIVIC, id_base, classification)
+
         civic_id_base += 1
 
     return era_items
