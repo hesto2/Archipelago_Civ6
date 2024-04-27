@@ -7,7 +7,8 @@ from worlds.Files import APContainer
 import uuid
 
 from worlds.civ_6.Enum import CivVICheckType
-from worlds.civ_6.Locations import CivVILocation
+from worlds.civ_6.Locations import CivVILocation, CivVILocationData
+from worlds.civ_6.Options import CivVIOptions
 
 
 # Python fstrings don't allow backslashes, so we use this workaround
@@ -41,6 +42,13 @@ class CivVIContainer(APContainer):
             opened_zipfile.writestr(filename, yml)
         super().write_contents(opened_zipfile)
 
+def get_cost(world, location: CivVILocationData) -> int:
+    """
+    Returns the cost of the item based on the game options
+    """
+    options: CivVIOptions = world.options
+    multiplier = options.research_cost_multiplier
+    return int(world.location_table[location.name].cost * multiplier)
 
 def generate_new_items(world) -> str:
     """
@@ -70,7 +78,7 @@ def generate_new_items(world) -> str:
                f'{location.item.name}" '
                f'EraType="{world.location_table[location.name].era_type}" '
                f'UITreeRow="{world.location_table[location.name].uiTreeRow}" '
-               f'Cost="{world.location_table[location.name].cost}" '
+               f'Cost="{get_cost(world, world.location_table[location.name])}" '
                f'Description="{location.name}" '
                f'AdvisorType="ADVISOR_GENERIC" />{nl}'
                for location in techs])}
@@ -82,7 +90,7 @@ def generate_new_items(world) -> str:
                f'{location.item.name}" '
                f'EraType="{world.location_table[location.name].era_type}" '
                f'UITreeRow="{world.location_table[location.name].uiTreeRow}" '
-               f'Cost="{world.location_table[location.name].cost}" '
+               f'Cost="{get_cost(world, world.location_table[location.name])}" '
                f'Description="{location.name}" '
                f'AdvisorType="ADVISOR_GENERIC" />{nl}'
                for location in civics])}
