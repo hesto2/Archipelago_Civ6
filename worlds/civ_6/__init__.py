@@ -3,7 +3,9 @@ from typing import Dict
 
 import Utils
 from worlds.civ_6.Container import CivVIContainer, generate_new_items
-from .Items import generate_flat_item_table, generate_item_by_era_table, CivVIItem
+from worlds.civ_6.Enum import CivVICheckType
+from worlds.civ_6.ProgressiveItems import get_flat_progressive_items
+from .Items import CivVIItemData, generate_flat_item_table, generate_item_by_era_table, CivVIItem
 from .Locations import CivVILocationData, EraType, generate_era_location_table, generate_flat_location_table
 from .Options import CivVIOptions
 from .Regions import create_regions
@@ -39,6 +41,7 @@ class CivVIWorld(World):
     location_name_to_id = {
         location.name: location.code for location in generate_flat_location_table().values()}
 
+    flat_progressive_items = get_flat_progressive_items()
     data_version = 9
     required_client_version = (0, 4, 5)
 
@@ -72,8 +75,12 @@ class CivVIWorld(World):
         create_regions(self, self.options, self.player)
 
     def create_item(self, name: str) -> Item:
-        item = self.item_table[name]
-        return CivVIItem(name, item.classification, item.civ_vi_id, self.player)
+        item: CivVIItemData = self.item_table[name]
+        item_name = name
+        options: CivVIOptions = self.options
+        if options.progressive_districts and item.item_type == CivVICheckType.PROGRESSIVE:
+            item_name = item.progression_name
+        return CivVIItem(item_name, item.classification, item.civ_vi_id, self.player)
 
     def create_items(self):
         for item in self.item_table:

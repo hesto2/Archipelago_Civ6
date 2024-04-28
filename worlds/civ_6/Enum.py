@@ -13,3 +13,4 @@ class EraType(Enum):
 class CivVICheckType(Enum):
     TECH = "TECH"
     CIVIC = "CIVIC"
+    PROGRESSIVE = "PROGRESSIVE"
