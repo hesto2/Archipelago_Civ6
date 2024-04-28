@@ -5,7 +5,7 @@ import Utils
 from worlds.civ_6.Container import CivVIContainer, generate_new_items
 from worlds.civ_6.Enum import CivVICheckType
 from worlds.civ_6.ProgressiveItems import get_flat_progressive_items
-from .Items import CivVIItemData, generate_flat_item_table, generate_item_by_era_table, CivVIItem
+from .Items import CivVIItemData, generate_item_table, CivVIItem
 from .Locations import CivVILocationData, EraType, generate_era_location_table, generate_flat_location_table
 from .Options import CivVIOptions
 from .Regions import create_regions
@@ -37,7 +37,7 @@ class CivVIWorld(World):
     web = CivVIWeb()
 
     item_name_to_id = {
-        item.name: item.code for item in generate_flat_item_table().values()}
+        item.name: item.code for item in generate_item_table().values()}
     location_name_to_id = {
         location.name: location.code for location in generate_flat_location_table().values()}
 
@@ -53,23 +53,13 @@ class CivVIWorld(World):
     def __init__(self, multiworld: "MultiWorld", player: int):
         super().__init__(multiworld, player)
         self.location_by_era = generate_era_location_table()
-        self.item_by_era = generate_item_by_era_table()
-        self.item_name_groups = {}
-
-        for era in EraType:
-            self.item_name_groups[era.value] = [
-                item.name for item in self.item_by_era[era.value].values()]
 
         self.location_table = {}
-        self.item_table = {}
+        self.item_table = generate_item_table()
 
         for era, locations in self.location_by_era.items():
             for item_name, location in locations.items():
                 self.location_table[location.name] = location
-
-        for era, items in self.item_by_era.items():
-            for item_name, item in items.items():
-                self.item_table[item.name] = item
 
     def create_regions(self):
         create_regions(self, self.options, self.player)

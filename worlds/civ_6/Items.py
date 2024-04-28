@@ -7,7 +7,6 @@ from worlds.civ_6.Enum import CivVICheckType
 from worlds.civ_6.ProgressiveItems import get_flat_progressive_items
 CIV_VI_AP_ITEM_ID_BASE = 5041000
 
-
 class CivVIItem(Item):
     game: str = "Civilization VI"
     civ_vi_id: int
@@ -39,31 +38,14 @@ class CivVIItemData:
         self.item_type = item_type
         self.progression_name = progression_name
 
-
-def generate_flat_item_table():
-    """
-    Generates a flat item table using the data from existing_tech.json and existing_civics.json.
-    The table is a dictionary with item names as keys and CivVIItemData objects as values.
-    """
-
-    era_items = generate_item_by_era_table()
-    flat_items = {}
-    for era_type, era_items in era_items.items():
-        for item_id, item_data in era_items.items():
-            flat_items[item_id] = item_data
-    return flat_items
-
-
-def generate_item_by_era_table(progressive_districts: bool = False):
+def generate_item_table():
     """
     Uses the data from existing_tech.json to generate a location table in the following format:
     {
-      "ERA_ANCIENT": {
-        "TECH_POTTERY": ItemData,
-        "TECH_ANIMAL_HUSBANDRY": ItemData,
-        "CIVIC_CODE_OF_LAWS": ItemData,
-        "CIVIC_CRAFTSMANSHIP": ItemData
-      },
+      "TECH_POTTERY": ItemData,
+      "TECH_ANIMAL_HUSBANDRY": ItemData,
+      "CIVIC_CODE_OF_LAWS": ItemData,
+      "CIVIC_CRAFTSMANSHIP": ItemData
       ...
     }
     """
@@ -86,14 +68,10 @@ def generate_item_by_era_table(progressive_districts: bool = False):
 
     progresive_items = get_flat_progressive_items()
 
-    era_items = {}
+    item_table = {}
 
     id_base = 0  # Used to offset the CivVIItemData code so tech's and civics don't overlap ids
     for tech in existing_techs:
-        era_type = tech['EraType']
-        if era_type not in era_items:
-            era_items[era_type] = {}
-
         classification = ItemClassification.progression if tech[
             "Type"] in required_items else ItemClassification.useful
         name = tech["Type"]
@@ -103,7 +81,7 @@ def generate_item_by_era_table(progressive_districts: bool = False):
             progression_name = progresive_items[name]
             check_type = CivVICheckType.PROGRESSIVE
 
-        era_items[era_type][tech["Type"]] = CivVIItemData(
+        item_table[tech["Type"]] = CivVIItemData(
             name, id_base, tech["Cost"], check_type, 0, classification, progression_name)
 
         id_base += 1
@@ -116,10 +94,6 @@ def generate_item_by_era_table(progressive_districts: bool = False):
     with open(existing_civics_path) as f:
         existing_civics = json.load(f)
     for civic in existing_civics:
-        era_type = civic['EraType']
-        if era_type not in era_items:
-            era_items[era_type] = {}
-
         name = civic["Type"]
         progression_name = None
         check_type = CivVICheckType.CIVIC
@@ -129,9 +103,9 @@ def generate_item_by_era_table(progressive_districts: bool = False):
 
         classification = ItemClassification.progression if civic[
             "Type"] in required_items else ItemClassification.useful
-        era_items[era_type][civic["Type"]] = CivVIItemData(
+        item_table[civic["Type"]] = CivVIItemData(
             civic["Type"], civic_id_base, civic["Cost"], check_type, id_base, classification, progression_name)
 
         civic_id_base += 1
 
-    return era_items
+    return item_table

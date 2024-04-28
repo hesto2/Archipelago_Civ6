@@ -7,7 +7,7 @@ from CommonClient import ClientCommandProcessor, CommonContext, get_base_parser,
 from NetUtils import ClientStatus, NetworkItem
 import Utils
 from worlds.civ_6.CivVIInterface import CivVIInterface
-from worlds.civ_6.Items import CivVIItemData, generate_item_by_era_table
+from worlds.civ_6.Items import CivVIItemData, generate_item_table
 from worlds.civ_6.Locations import generate_era_location_table
 from worlds.civ_6.TunerClient import TunerErrorException
 
@@ -49,7 +49,7 @@ class CivVIContext(CommonContext):
         super().__init__(server_address, password)
         self.game_interface = CivVIInterface(logger)
         location_by_era = generate_era_location_table()
-        item_by_era = generate_item_by_era_table()
+        item_table = generate_item_table()
 
         # Get tables formatted in a way that is easier to use here
         for era, locations in location_by_era.items():
@@ -57,9 +57,8 @@ class CivVIContext(CommonContext):
                 self.location_name_to_id[location.name] = location.code
                 self.location_name_to_civ_location[location.name] = location
 
-        for era, items in item_by_era.items():
-            for item_name, item in items.items():
-                self.item_id_to_civ_item[item.code] = item
+        for item_name, item in item_table.items():
+            self.item_id_to_civ_item[item.code] = item
 
     async def resync(self):
         if self.processing_multiple_items:
@@ -119,36 +118,36 @@ async def handle_checked_location(ctx: CivVIContext):
 
 
 async def handle_receive_items(ctx: CivVIContext, last_received_index_override: int = None):
-  try:
-    last_received_index = last_received_index_override or await ctx.game_interface.get_last_received_index()
-    if len(ctx.items_received) - last_received_index > 1:
-        logger.debug("Multiple items received")
-        ctx.processing_multiple_items = True
-    for index, network_item in enumerate(ctx.items_received):
-        if index > last_received_index:
-            item: CivVIItemData = ctx.item_id_to_civ_item[network_item.item]
-            sender = ctx.player_names[network_item.player]
-            await ctx.game_interface.give_item_to_player(item, sender)
-            await asyncio.sleep(0.02)
+    try:
+        last_received_index = last_received_index_override or await ctx.game_interface.get_last_received_index()
+        if len(ctx.items_received) - last_received_index > 1:
+            logger.debug("Multiple items received")
+            ctx.processing_multiple_items = True
+        for index, network_item in enumerate(ctx.items_received):
+            if index > last_received_index:
+                item: CivVIItemData = ctx.item_id_to_civ_item[network_item.item]
+                sender = ctx.player_names[network_item.player]
+                await ctx.game_interface.give_item_to_player(item, sender)
+                await asyncio.sleep(0.02)
 
-    if ctx.processing_multiple_items:
-        logger.debug("DONE")
-    ctx.processing_multiple_items = False
-  finally:
-    # If something errors out, then unblock item processing
-    ctx.processing_multiple_items = False
+        if ctx.processing_multiple_items:
+            logger.debug("DONE")
+        ctx.processing_multiple_items = False
+    finally:
+        # If something errors out, then unblock item processing
+        ctx.processing_multiple_items = False
 
 
 async def handle_check_goal_complete(ctx: CivVIContext):
     # logger.debug("Sending Goal Complete")
     result = await ctx.game_interface.check_victory()
     if result:
-      logger.info("Sending Victory to server!")
-      await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
+        logger.info("Sending Victory to server!")
+        await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
 
 
 async def handle_check_deathlink(ctx: CivVIContext):
-  # TODO: Implement deathlink handling
+    # TODO: Implement deathlink handling
     pass
 
 
