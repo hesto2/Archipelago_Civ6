@@ -114,7 +114,8 @@ function View( playerID:number, kData:table )
 
 	for i, data in ipairs(kData) do
     -- AP: Tech blocker cannot be selected
-    if data.TechType ~= "TECH_BLOCKER" then
+    if data.TechType ~= "TECH_BLOCKER" and string.sub(data.TechType, 1, 7) == "TECH_AP"
+ then
       if data.IsCurrent or data.IsLastCompleted then
         RealizeCurrentResearch(playerID, data);
         if data.Repeatable then
