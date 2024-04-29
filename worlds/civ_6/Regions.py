@@ -53,13 +53,16 @@ def has_required_items(state: CollectionState, era: EraType, player: int, has_pr
             __file__), 'data/progressive_districts.json')
         with open(file_path) as file:
             progressive_districts = json.load(file)
-            all_previous_items = get_cumulative_prereqs_for_era(
-                era, False)
+
+            # Verify we can still reach non progressive items
             all_previous_items_no_progression = get_cumulative_prereqs_for_era(
                 era, True)
             if not state.has_all(all_previous_items_no_progression, player):
                 return False
 
+            # Verify we have the correct amount of progressive items
+            all_previous_items = get_cumulative_prereqs_for_era(
+                era, False)
             required_counts: typing.Dict[str, int] = {}
 
             for key, value in progressive_districts.items():

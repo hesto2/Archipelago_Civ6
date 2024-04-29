@@ -1,14 +1,16 @@
 import asyncio
 import logging
 import traceback
-from typing import Dict
+from typing import Dict, List
 
 from CommonClient import ClientCommandProcessor, CommonContext, get_base_parser, logger, server_loop, gui_enabled
 from NetUtils import ClientStatus, NetworkItem
 import Utils
 from worlds.civ_6.CivVIInterface import CivVIInterface
+from worlds.civ_6.Enum import CivVICheckType
 from worlds.civ_6.Items import CivVIItemData, generate_item_table
 from worlds.civ_6.Locations import generate_era_location_table
+from worlds.civ_6.ProgressiveItems import get_progressive_items
 from worlds.civ_6.TunerClient import TunerErrorException
 
 
@@ -42,14 +44,18 @@ class CivVIContext(CommonContext):
     location_name_to_civ_location = {}
     location_name_to_id = {}
     item_id_to_civ_item: Dict[int, CivVIItemData] = {}
+    item_table: Dict[str, CivVIItemData] = {}
     processing_multiple_items = False
     disconnected = False
+    progressive_items_by_type = get_progressive_items()
+    item_name_to_id = {
+        item.name: item.code for item in generate_item_table().values()}
 
     def __init__(self, server_address, password):
         super().__init__(server_address, password)
         self.game_interface = CivVIInterface(logger)
         location_by_era = generate_era_location_table()
-        item_table = generate_item_table()
+        self.item_table = generate_item_table()
 
         # Get tables formatted in a way that is easier to use here
         for era, locations in location_by_era.items():
@@ -57,7 +63,7 @@ class CivVIContext(CommonContext):
                 self.location_name_to_id[location.name] = location.code
                 self.location_name_to_civ_location[location.name] = location
 
-        for item_name, item in item_table.items():
+        for item_name, item in self.item_table.items():
             self.item_id_to_civ_item[item.code] = item
 
     async def resync(self):
@@ -123,12 +129,32 @@ async def handle_receive_items(ctx: CivVIContext, last_received_index_override: 
         if len(ctx.items_received) - last_received_index > 1:
             logger.debug("Multiple items received")
             ctx.processing_multiple_items = True
+
+        # Handle non progressive items
+        progressive_items: List[CivVIItemData] = []
         for index, network_item in enumerate(ctx.items_received):
+
+            item: CivVIItemData = ctx.item_id_to_civ_item[network_item.item]
             if index > last_received_index:
-                item: CivVIItemData = ctx.item_id_to_civ_item[network_item.item]
+                if item.item_type == CivVICheckType.PROGRESSIVE:
+                    # if the item is progressive, then check how far in that progression type we are and send the appropriate item
+                    count = sum(
+                        1 for count_item in progressive_items if count_item.name == item.name)
+
+                    if count >= len(ctx.progressive_items_by_type[item.name]):
+                        logger.error(
+                            f"Received more progressive items than expected for {item.name}")
+                        continue
+
+                    item_name = ctx.progressive_items_by_type[item.name][count]
+                    item = ctx.item_table[item_name]
+
                 sender = ctx.player_names[network_item.player]
                 await ctx.game_interface.give_item_to_player(item, sender)
                 await asyncio.sleep(0.02)
+
+            if item.item_type == CivVICheckType.PROGRESSIVE:
+                progressive_items.append(item)
 
         if ctx.processing_multiple_items:
             logger.debug("DONE")

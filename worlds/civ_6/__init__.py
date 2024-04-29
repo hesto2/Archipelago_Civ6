@@ -33,6 +33,7 @@ class CivVIWorld(World):
 
     game: str = "Civilization VI"
     topology_present = False
+    options: CivVIOptions
 
     web = CivVIWeb()
 
@@ -40,6 +41,8 @@ class CivVIWorld(World):
         item.name: item.code for item in generate_item_table().values()}
     location_name_to_id = {
         location.name: location.code for location in generate_flat_location_table().values()}
+
+    item_table: Dict[str, CivVIItemData] = {}
 
     flat_progressive_items = get_flat_progressive_items()
     data_version = 9
@@ -66,20 +69,26 @@ class CivVIWorld(World):
 
     def create_item(self, name: str) -> Item:
         item: CivVIItemData = self.item_table[name]
-        item_name = name
-        options: CivVIOptions = self.options
-        if options.progressive_districts and item.item_type == CivVICheckType.PROGRESSIVE:
-            item_name = item.progression_name
-        return CivVIItem(item_name, item.classification, item.civ_vi_id, self.player)
+
+        if self.options.progressive_districts and item.progression_name != None:
+            item = self.item_table[item.progression_name]
+
+        return CivVIItem(item, self.player)
 
     def create_items(self):
-        for item in self.item_table:
+        for item_name, data in self.item_table.items():
+          # Don't add progressive items to the itempool here, instead add the base item and have create_item convert it
+            if data.item_type == CivVICheckType.PROGRESSIVE:
+                continue
             self.multiworld.itempool += [self.create_item(
-                item)]
+                item_name)]
 
     def fill_slot_data(self):
         # TODO: Pass in selected options here
         return {
+            "progressive_districts": self.options.progressive_districts.value,
+            "death_link": self.options.death_link.value,
+
         }
 
     def generate_output(self, output_directory: str):

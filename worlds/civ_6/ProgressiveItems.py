@@ -4,7 +4,7 @@ from typing import List
 
 
 def get_flat_progressive_items():
-    progressive_districts = get_progressive_districts()
+    progressive_districts = get_progressive_items()
     flat_progressive_techs = {}
     for key, value in progressive_districts.items():
         for item in value:
@@ -12,7 +12,7 @@ def get_flat_progressive_items():
     return flat_progressive_techs
 
 
-def get_progressive_districts():
+def get_progressive_items():
     file_path = os.path.join(os.path.dirname(
         __file__), 'data/progressive_districts.json')
     with open(file_path) as file:

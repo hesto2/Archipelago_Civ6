@@ -4,20 +4,8 @@ import os
 from typing import Dict, List
 from BaseClasses import Item, ItemClassification
 from worlds.civ_6.Enum import CivVICheckType
-from worlds.civ_6.ProgressiveItems import get_flat_progressive_items
+from worlds.civ_6.ProgressiveItems import get_flat_progressive_items, get_progressive_items
 CIV_VI_AP_ITEM_ID_BASE = 5041000
-
-class CivVIItem(Item):
-    game: str = "Civilization VI"
-    civ_vi_id: int
-    item_type: CivVICheckType
-
-    def __init__(self, name: str, classification: ItemClassification, civ_vi_id: int | None, player: int):
-        super().__init__(name, classification, civ_vi_id + CIV_VI_AP_ITEM_ID_BASE, player)
-        if name.split("_")[0] == "TECH":
-            self.item_type = CivVICheckType.TECH
-        elif name.split("_")[0] == "CIVIC":
-            self.item_type = CivVICheckType.CIVIC
 
 
 class CivVIItemData:
@@ -37,6 +25,18 @@ class CivVIItemData:
         self.cost = cost
         self.item_type = item_type
         self.progression_name = progression_name
+
+
+class CivVIItem(Item):
+    game: str = "Civilization VI"
+    civ_vi_id: int
+    item_type: CivVICheckType
+
+    def __init__(self, item: CivVIItemData, player: int):
+        super().__init__(item.name, item.classification, item.code, player)
+        self.civ_vi_id = item.civ_vi_id
+        self.item_type = item.item_type
+
 
 def generate_item_table():
     """
@@ -70,7 +70,8 @@ def generate_item_table():
 
     item_table = {}
 
-    id_base = 0  # Used to offset the CivVIItemData code so tech's and civics don't overlap ids
+    # Used to offset the CivVIItemData code so tech's and civics don't overlap ids
+    tech_id_base = 0
     for tech in existing_techs:
         classification = ItemClassification.progression if tech[
             "Type"] in required_items else ItemClassification.useful
@@ -79,12 +80,11 @@ def generate_item_table():
         check_type = CivVICheckType.TECH
         if tech["Type"] in progresive_items.keys():
             progression_name = progresive_items[name]
-            check_type = CivVICheckType.PROGRESSIVE
 
         item_table[tech["Type"]] = CivVIItemData(
-            name, id_base, tech["Cost"], check_type, 0, classification, progression_name)
+            name, tech_id_base, tech["Cost"], check_type, 0, classification, progression_name)
 
-        id_base += 1
+        tech_id_base += 1
 
     # Generate Civics
     existing_civics_path = os.path.join(
@@ -99,13 +99,20 @@ def generate_item_table():
         check_type = CivVICheckType.CIVIC
         if civic["Type"] in progresive_items.keys():
             progression_name = progresive_items[name]
-            check_type = CivVICheckType.PROGRESSIVE
 
         classification = ItemClassification.progression if civic[
             "Type"] in required_items else ItemClassification.useful
         item_table[civic["Type"]] = CivVIItemData(
-            civic["Type"], civic_id_base, civic["Cost"], check_type, id_base, classification, progression_name)
+            civic["Type"], civic_id_base, civic["Cost"], check_type, tech_id_base, classification, progression_name)
 
         civic_id_base += 1
+
+    # Generate Progressive Items, start at the end of the techs and civics
+    progressive_id_base = 0
+    progresive_items = get_progressive_items()
+    for item_name in progresive_items.keys():
+        item_table[item_name] = CivVIItemData(
+            item_name, progressive_id_base, 0, CivVICheckType.PROGRESSIVE, civic_id_base + tech_id_base, ItemClassification.progression, None)
+        progressive_id_base += 1
 
     return item_table
