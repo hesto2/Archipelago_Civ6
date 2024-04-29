@@ -26,6 +26,14 @@
     <File>AllowBuildObsolete.sql</File>
     <File>GovernmentScreen.lua</File>
     <File>ActionPanel.lua</File>
+    <File>ProductionPanel.lua</File>
+    <File>Icons/NewTech128.dds</File>
+    <File>Icons/NewTech160.dds</File>
+    <File>Icons/NewTech30.dds</File>
+    <File>Icons/NewTech38.dds</File>
+    <File>Icons/NewTech42.dds</File>
+    <File>Icons/NewTech42_FOW.dds</File>
+    <File>Icons/NewTech_Icons.xml</File>
   </Files>
   <InGameActions>
     <UpdateDatabase id="ArchipelagoItems">
@@ -57,7 +65,15 @@
 
       <File>GovernmentScreen.lua</File>
       <File>ActionPanel.lua</File>
+      <File>ProductionPanel.lua</File>
 
+    </ImportFiles>
+    <ImportFiles id="ImportIcons">
+      <File>Icons/NewTech128.dds</File>
+      <File>Icons/NewTech160.dds</File>
+      <File>Icons/NewTech42.dds</File>
+      <File>Icons/NewTech38.dds</File>
+      <File>Icons/NewTech30.dds</File>
     </ImportFiles>
     <ReplaceUIScript id="Archipelago_ResearchChooser">
       <Properties>
@@ -101,11 +117,21 @@
         <LuaReplace>ActionPanel.lua</LuaReplace>
       </Properties>
     </ReplaceUIScript>
+    <ReplaceUIScript id="Archipelago_ProductionPanel">
+      <Properties>
+        <LoadOrder>-102</LoadOrder>
+        <LuaContext>ProductionPanel</LuaContext>
+        <LuaReplace>ProductionPanel.lua</LuaReplace>
+      </Properties>
+    </ReplaceUIScript>
     <AddGameplayScripts id="ArchipelagoScripts">
       <File>ArchipelagoRunner.lua</File>
     </AddGameplayScripts>
-    <UpdateIcons id="icons">
+    <UpdateIcons id="NotificationIcon">
       <File>ArchipelagoIcons.xml</File>
+    </UpdateIcons>
+    <UpdateIcons id="APIcon">
+      <File>Icons/NewTech_Icons.xml</File>
     </UpdateIcons>
   </InGameActions>
 </Mod>
