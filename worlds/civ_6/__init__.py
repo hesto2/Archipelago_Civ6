@@ -88,52 +88,13 @@ class CivVIWorld(World):
 
     def generate_output(self, output_directory: str):
       # fmt: off
-        mod_name = f"MOD-AP-{self.multiworld.get_file_safe_player_name(self.player)}"
+        mod_name = f"AP-{self.multiworld.get_file_safe_player_name(self.player)}"
       # fmt: on
         mod_dir = os.path.join(
             output_directory, mod_name + "_" + Utils.__version__)
         mod_files = {
-            f"{mod_name}/NewItems.xml": generate_new_items(self),
+            f"NewItems.xml": generate_new_items(self),
         }
-
-        # Add static mod files
-        current_file_path = os.path.abspath(__file__)
-        current_directory = os.path.dirname(current_file_path)
-        static_mod_files_folder = os.path.join(
-            current_directory, 'static_mod_files')
-        static_mod_files = os.listdir(static_mod_files_folder)
-
-        def process_file(item_path: str, file_name: str, folder_name: str = ''):
-            read_mode = 'r' if not file_name.endswith('.dds') else 'rb'
-            with open(item_path, read_mode) as file:
-                file_content = file.read()
-
-                # Update modinfo file name and id
-                if file_name.endswith('.modinfo'):
-                    # fmt: off
-                    file_content = re.sub(r'Mod id="[a-f0-9-]+"\s+version="\d">', f'Mod id="{uuid.uuid4()}" version="1">', file_content)
-                    file_content = re.sub(r'<Name>[^<]+</Name>', f'<Name>{mod_name}</Name>', file_content)
-                    # fmt: on
-
-                mod_files[f"{mod_name}/{folder_name}{file_name}"] = file_content
-
-        def process_folder(item_path: str, folder_name: str):
-            folder_files = os.listdir(item_path)
-            for item_name in folder_files:
-                file_path = os.path.join(item_path, item_name)
-                if os.path.isfile(file_path):
-                    process_file(file_path, item_name, folder_name)
-                elif os.path.isdir(file_path):
-                    process_folder(file_path, item_name, f"{folder_name}{item_name}/")
-
-        for item_name in static_mod_files:
-            item_path = os.path.join(static_mod_files_folder, item_name)
-            if os.path.isfile(item_path):
-                process_file(item_path, item_name)
-            elif os.path.isdir(item_path):
-                process_folder(item_path, f"{item_name}/")
-                pass
-
         mod = CivVIContainer(mod_files, mod_dir, output_directory, self.player,
                              self.multiworld.get_file_safe_player_name(self.player))
         mod.write()
