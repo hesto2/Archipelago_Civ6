@@ -1,3 +1,4 @@
+ExposedMembers.AP = {}
 -- Copyright 2016-2020, Firaxis Games
 
 -- ===========================================================================
@@ -101,6 +102,7 @@ g_uiConnectorSets		= {};
 -- Add to item status table. Instead of enum use hash of "UNREVEALED"; special case.
 ITEM_STATUS["UNREVEALED"] = 0xB87BE593;
 STATUS_ART[ITEM_STATUS.UNREVEALED]	= { Name="UNREVEALED",	TextColor0=UI.GetColorValueFromHexLiteral(0xff202726), TextColor1=UI.GetColorValueFromHexLiteral(0x00000000), FillTexture="TechTree_GearButtonTile_Disabled.dds",BGU=0,BGV=(SIZE_NODE_Y*3),	IsButton=false,	BoltOn=false,	IconBacking=PIC_METER_BACK  };
+disabled_node_states = {}
 
 -- ===========================================================================
 --	CONSTANTS
@@ -598,9 +600,16 @@ function AllocateUI( kNodeGrid:table, kPaths:table )
       end
       node["unlockGOV"] = InstanceManager:new( "GovernmentIcon", "GovernmentInstanceGrid", node.UnlockStack );
 
+      -- AP:
       item.Callback = function()
         if IsAPTech(item.Type) then
           SetCurrentNode(item.Hash);
+        else
+          local kParameters:table = {};
+          kParameters.id= item.Index;
+          kParameters.OnStart = "OnToggleTech"
+          print("sending event:", item.Index)
+          UI.RequestPlayerOperation(Game.GetLocalPlayer(), PlayerOperations.EXECUTE_SCRIPT, kParameters);
         end
       end
 
@@ -812,13 +821,17 @@ end
 -- ===========================================================================
 --	Now its own function so Mods / Expansions can modify the nodes
 -- ===========================================================================
-function PopulateNode(uiNode, playerTechData)
+function PopulateNode(uiNode, playerTechData, statusOverride)
 	local item		:table = g_kItemDefaults[uiNode.Type];						-- static item data
 	local live		:table = playerTechData[DATA_FIELD_LIVEDATA][uiNode.Type];	-- live (changing) data
+  live.Status = statusOverride or live.Status
 	local status	:number = live.IsRevealed and live.Status or ITEM_STATUS.UNREVEALED;
+  if statusOverride then
+    status = statusOverride
+  end
 	local artInfo	:table = STATUS_ART[status];							-- art/styles for this state
 
-	if(status == ITEM_STATUS.RESEARCHED) then
+	if(status == ITEM_STATUS.RESEARCHED and not toggleStatus) then
 		for _,prereqId in pairs(item.Prereqs) do
 			if(prereqId ~= PREREQ_ID_TREE_START) then
 				local prereq		:table = g_kItemDefaults[prereqId];
@@ -1011,7 +1024,11 @@ function View( playerTechData:table )
 
 	-- Output the node states for the tree
 	for _,uiNode in pairs(g_uiNodes) do
-		PopulateNode( uiNode, playerTechData);
+    local statusOverride = nil
+    if disabled_node_states[uiNode.Type] ~= nil then
+      statusOverride = disabled_node_states[uiNode.Type]
+    end
+		PopulateNode( uiNode, playerTechData, statusOverride);
 	end
 
 	-- Fill in where the markers (representing players) are at:
@@ -1136,13 +1153,14 @@ function GetCurrentData( ePlayer:number, eCompletedTech:number )
 		local techID	:number = GameInfo.Technologies[item.Type].Index;
 		local status	:number = ITEM_STATUS.BLOCKED;
 		local turnsLeft	:number = playerTechs:GetTurnsToResearch(techID);
-		if playerTechs:HasTech(techID) or techID == eCompletedTech then
+    local isDisabled = Game.GetProperty("ToggledTechs_" .. techID) == true
+		if (playerTechs:HasTech(techID) or techID == eCompletedTech) and not isDisabled then
 			status = ITEM_STATUS.RESEARCHED;
 			turnsLeft = 0;
 		elseif techID == currentTechID then
 			status = ITEM_STATUS.CURRENT;
 			turnsLeft = playerTechs:GetTurnsLeft();
-		elseif playerTechs:CanResearch(techID) then
+		elseif playerTechs:CanResearch(techID) or isDisabled then
 			status = ITEM_STATUS.READY;
 		end
 
@@ -1328,7 +1346,7 @@ end
 -- ===========================================================================
 function OnResearchChanged( ePlayer:number, eTech:number )
 	if (m_ePlayer == PlayerTypes.NONE or m_ePlayer == PlayerTypes.OBSERVER) then return; end			-- Autoplay support.
-	if not ContextPtr:IsHidden() and ShouldUpdateWhenResearchChanges( ePlayer ) then
+	if (not ContextPtr:IsHidden() and ShouldUpdateWhenResearchChanges( ePlayer )) then
 		m_kCurrentData = GetCurrentData( m_ePlayer, -1 );
 		View( m_kCurrentData );
 	end
@@ -2050,6 +2068,32 @@ function OnInit( isReload:boolean )
 	LateInitialize();
 end
 
+function OnPostToggleTech(id, isDisabled)
+  local type = nil
+  for key, value in pairs(g_kItemDefaults) do
+    if value.Index == id then
+      type = key
+    end
+  end
+  print(id, isDisabled)
+  -- May be observation mode.
+  m_ePlayer = Game.GetLocalPlayer();
+  if (m_ePlayer == -1) then
+      return;
+  end
+  local m_kCurrentData = GetCurrentData(m_ePlayer);
+
+  local node = g_uiNodes[type]
+  newStatus = ITEM_STATUS.RESEARCHED -- 4
+
+  if isDisabled then
+    newStatus = ITEM_STATUS.READY -- 2
+  end
+  print("new status:", newStatus)
+  disabled_node_states[type] = newStatus
+  PopulateNode(node, m_kCurrentData, newStatus )
+end
+
 
 -- ===========================================================================
 --	Setup callbacks, do NOT setup static information until the context is
@@ -2097,6 +2141,9 @@ function Initialize()
 	LuaEvents.LaunchBar_RaiseTechTree.Add( OnOpen );
 	LuaEvents.ResearchChooser_RaiseTechTree.Add( OnOpen );
 	LuaEvents.Tutorial_TechTreeScrollToNode.Add( OnTutorialScrollToNode );
+  LuaEvents.OnPostToggleTech.Add( OnPostToggleTech );
+
+  ExposedMembers.AP.OnPostToggleTech = OnPostToggleTech;
 
 	-- Game engine Event
 	Events.LocalPlayerTurnBegin.Add( OnLocalPlayerTurnBegin );
