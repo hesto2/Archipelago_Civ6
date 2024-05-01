@@ -50,7 +50,7 @@ class TunerClient:
             return ""
 
     async def send_game_command(self, command_string: str, size: int = 64):
-        """Small abstraction that prefixes a command with GameCore.Game."""
+        """Small helper that prefixes a command with GameCore.Game."""
         return await self.send_command("GameCore.Game." + command_string, size)
 
     async def send_command(self, command_string: str, size: int = 64):

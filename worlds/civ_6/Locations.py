@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List, Optional
+from typing import List, Optional, Dict
 from BaseClasses import Location, Region
 import json
 
@@ -42,27 +42,25 @@ class CivVILocation(Location):
             self.location_type = CivVICheckType.CIVIC
 
 
-def format_tech_name(id: int) -> str:
-    return f'TECH_AP{id}'
+def generate_flat_location_table() -> Dict[str, CivVILocationData]:
+    """
+    Generates a flat location table in the following format:
+    {
+      "TECH_AP0": CivVILocationData,
+      "TECH_AP1": CivVILocationData,
+      "CIVIC_AP0": CivVILocationData,
+      ...
+    }
+    """
+    era_locations = generate_era_location_table()
+    flat_locations = {}
+    for era_type, locations in era_locations.items():
+        for location_id, location_data in locations.items():
+            flat_locations[location_id] = location_data
+    return flat_locations
 
-def generate_flat_location_table():
-  """
-  Generates a flat location table in the following format:
-  {
-    "TECH_AP0": CivVILocationData,
-    "TECH_AP1": CivVILocationData,
-    "CIVIC_AP0": CivVILocationData,
-    ...
-  }
-  """
-  era_locations = generate_era_location_table()
-  flat_locations = {}
-  for era_type, locations in era_locations.items():
-    for location_id, location_data in locations.items():
-      flat_locations[location_id] = location_data
-  return flat_locations
 
-def generate_era_location_table():
+def generate_era_location_table() -> Dict[EraType, Dict[str, CivVILocationData]]:
     """
     Uses the data from existing_tech.json to generate a location table in the following format:
     {

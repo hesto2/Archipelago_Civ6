@@ -38,7 +38,7 @@ class CivVIItem(Item):
         self.item_type = item.item_type
 
 
-def generate_item_table():
+def generate_item_table() -> Dict[str, CivVIItemData]:
     """
     Uses the data from existing_tech.json to generate a location table in the following format:
     {
@@ -107,7 +107,7 @@ def generate_item_table():
 
         civic_id_base += 1
 
-    # Generate Progressive Items, start at the end of the techs and civics
+    # Generate Progressive Items
     progressive_id_base = 0
     progresive_items = get_progressive_items()
     for item_name in progresive_items.keys():

@@ -2,9 +2,7 @@ from dataclasses import dataclass
 import os
 from typing import List
 import zipfile
-from BaseClasses import MultiWorld
 from worlds.Files import APContainer
-import uuid
 
 from worlds.civ_6.Enum import CivVICheckType
 from worlds.civ_6.Locations import CivVILocation, CivVILocationData
@@ -26,7 +24,7 @@ class CivTreeItem:
 
 class CivVIContainer(APContainer):
     """
-    Responsible for generating the mod files for the Civ VI multiworld
+    Responsible for generating the dynamic mod files for the Civ VI multiworld
     """
     game: str = "Civilization VI"
 

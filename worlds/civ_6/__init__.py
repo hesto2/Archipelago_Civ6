@@ -33,7 +33,7 @@ class CivVIWorld(World):
 
     game: str = "Civilization VI"
     topology_present = False
-    options: CivVIOptions
+    options_dataclass = CivVIOptions
 
     web = CivVIWeb()
 
@@ -43,15 +43,11 @@ class CivVIWorld(World):
         location.name: location.code for location in generate_flat_location_table().values()}
 
     item_table: Dict[str, CivVIItemData] = {}
+    location_by_era: Dict[EraType, Dict[str, CivVILocationData]]
 
-    flat_progressive_items = get_flat_progressive_items()
-    data_version = 9
+    data_version = 1
     required_client_version = (0, 4, 5)
 
-    area_connections: Dict[int, int]
-
-    options_dataclass = CivVIOptions
-    location_by_era: Dict[EraType, Dict[str, CivVILocationData]]
 
     def __init__(self, multiworld: "MultiWorld", player: int):
         super().__init__(multiworld, player)
@@ -60,8 +56,8 @@ class CivVIWorld(World):
         self.location_table = {}
         self.item_table = generate_item_table()
 
-        for era, locations in self.location_by_era.items():
-            for item_name, location in locations.items():
+        for _era, locations in self.location_by_era.items():
+            for _item_name, location in locations.items():
                 self.location_table[location.name] = location
 
     def create_regions(self):
@@ -84,7 +80,6 @@ class CivVIWorld(World):
                 item_name)]
 
     def fill_slot_data(self):
-        # TODO: Pass in selected options here
         return {
             "progressive_districts": self.options.progressive_districts.value,
             "death_link": self.options.death_link.value,
@@ -93,7 +88,7 @@ class CivVIWorld(World):
 
     def generate_output(self, output_directory: str):
       # fmt: off
-        mod_name = f"AP-{self.multiworld.get_file_safe_player_name(self.player)}"
+        mod_name = f"MOD-AP-{self.multiworld.get_file_safe_player_name(self.player)}"
       # fmt: on
         mod_dir = os.path.join(
             output_directory, mod_name + "_" + Utils.__version__)
@@ -108,23 +103,36 @@ class CivVIWorld(World):
             current_directory, 'static_mod_files')
         static_mod_files = os.listdir(static_mod_files_folder)
 
-        for file_name in static_mod_files:
-            file_path = os.path.join(static_mod_files_folder, file_name)
-            with open(file_path, 'r') as file:
-                mod_files[f"{mod_name}/{file_name}"] = file.read()
-            for file_name in static_mod_files:
-                file_path = os.path.join(static_mod_files_folder, file_name)
-                with open(file_path, 'r') as file:
-                    file_content = file.read()
+        def process_file(item_path: str, file_name: str, folder_name: str = ''):
+            read_mode = 'r' if not file_name.endswith('.dds') else 'rb'
+            with open(item_path, read_mode) as file:
+                file_content = file.read()
 
-                    # Update modinfo file
-                    if file_name.endswith('.modinfo'):
-                      # fmt: off
-                        file_content = re.sub(r'Mod id="[a-f0-9-]+"\s+version="\d">', f'Mod id="{uuid.uuid4()}" version="1">', file_content)
-                        file_content = re.sub(r'<Name>[^<]+</Name>', f'<Name>{mod_name}</Name>', file_content)
-                      # fmt: on
+                # Update modinfo file name and id
+                if file_name.endswith('.modinfo'):
+                    # fmt: off
+                    file_content = re.sub(r'Mod id="[a-f0-9-]+"\s+version="\d">', f'Mod id="{uuid.uuid4()}" version="1">', file_content)
+                    file_content = re.sub(r'<Name>[^<]+</Name>', f'<Name>{mod_name}</Name>', file_content)
+                    # fmt: on
 
-                    mod_files[f"{mod_name}/{file_name}"] = file_content
+                mod_files[f"{mod_name}/{folder_name}{file_name}"] = file_content
+
+        def process_folder(item_path: str, folder_name: str):
+            folder_files = os.listdir(item_path)
+            for item_name in folder_files:
+                file_path = os.path.join(item_path, item_name)
+                if os.path.isfile(file_path):
+                    process_file(file_path, item_name, folder_name)
+                elif os.path.isdir(file_path):
+                    process_folder(file_path, item_name, f"{folder_name}{item_name}/")
+
+        for item_name in static_mod_files:
+            item_path = os.path.join(static_mod_files_folder, item_name)
+            if os.path.isfile(item_path):
+                process_file(item_path, item_name)
+            elif os.path.isdir(item_path):
+                process_folder(item_path, f"{item_name}/")
+                pass
 
         mod = CivVIContainer(mod_files, mod_dir, output_directory, self.player,
                              self.multiworld.get_file_safe_player_name(self.player))
