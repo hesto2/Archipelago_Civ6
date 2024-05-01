@@ -115,7 +115,7 @@ function View( playerID:number, kData:table )
 	table.sort(kData, function(a, b) return Locale.Compare(a.Name, b.Name) == -1; end);
 	for i, data in ipairs(kData) do
     -- AP: Tech blocker cannot be selected
-    if data.CivicType ~= "CIVIC_BLOCKER" then
+    if data.CivicType ~= "CIVIC_BLOCKER" and string.sub(data.CivicType, 1, 8) == "CIVIC_AP" then
       if data.IsCurrent or data.IsLastCompleted then
         RealizeCurrentCivic( playerID, data, nil, m_CachedModifiers );
         if (data.Repeatable) then
