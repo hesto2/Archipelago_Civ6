@@ -165,31 +165,34 @@ end
 function OnToggleTech(_, params)
     -- Responds to player clicking unlocked items in the UI to disable them, useful for building obsolete units, id is sent in as index so we don't need to modify it
     print("START ToggleTech")
-    for key, value in pairs(params) do
-        print(key, value)
-    end
-    id = params.id
+    local id = params.id
 
-    gameProperty = "ToggledTechs_" .. id
+    local gameProperty = "ToggledTechs_" .. id
 
-    hasTech = HUMAN_PLAYER:GetTechs():HasTech(id)
-    toggledState = Game.GetProperty(gameProperty) or false
+    local hasTech = HUMAN_PLAYER:GetTechs():HasTech(id)
+    local toggledState = Game.GetProperty(gameProperty) or false
+    local isValid = false
 
     print("Current disabled state:", toggledState)
     print("Has Tech", hasTech)
     if hasTech then
         HUMAN_PLAYER:GetTechs():SetTech(id, false)
         toggledState = true
+        isValid = true
     else
         if toggledState == true then
             HUMAN_PLAYER:GetTechs():SetTech(id, true)
             HUMAN_PLAYER:GetTechs():SetResearchProgress(id, 999999)
             toggledState = false
+            isValid = true
         end
     end
     print("New disabled state:", toggledState)
-    Game.SetProperty(gameProperty, toggledState)
-    ExposedMembers.AP.OnPostToggleTech(id, toggledState)
+    -- Don't change anything for techs that we haven't unlocked yet
+    if isValid then
+        Game.SetProperty(gameProperty, toggledState)
+        ExposedMembers.AP.OnPostToggleTech(id, toggledState)
+    end
 
     print("END ToggleTech")
 end
