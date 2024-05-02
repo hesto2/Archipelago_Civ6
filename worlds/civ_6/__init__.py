@@ -4,7 +4,6 @@ from typing import Dict
 import Utils
 from .Container import CivVIContainer, generate_new_items
 from .Enum import CivVICheckType
-from .ProgressiveItems import get_flat_progressive_items
 from .Items import CivVIItemData, generate_item_table, CivVIItem
 from .Locations import CivVILocationData, EraType, generate_era_location_table, generate_flat_location_table
 from .Options import CivVIOptions
@@ -16,7 +15,7 @@ from worlds.LauncherComponents import Component, SuffixIdentifier, Type, compone
 def run_client():
     print("Running Civ6 Client")
     from Civ6Client import main  # lazy import
-
+    launch_subprocess(main, name="Civ6Client")
 
 
 components.append(
