@@ -3,7 +3,7 @@ from typing import List, Optional, Dict
 from BaseClasses import Location, Region
 import json
 
-from worlds.civ_6.Enum import CivVICheckType, EraType
+from .Enum import CivVICheckType, EraType
 
 CIV_VI_AP_LOCATION_ID_BASE = 5041000
 

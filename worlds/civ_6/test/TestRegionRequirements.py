@@ -1,7 +1,7 @@
 import json
 import os
-from worlds.civ_6.Enum import EraType
-from worlds.civ_6.ProgressiveItems import convert_items_to_have_progression
+from ..Enum import EraType
+from ..ProgressiveItems import convert_items_to_have_progression
 from . import CivVITestBase
 
 

@@ -3,8 +3,8 @@ import json
 import os
 from typing import Dict, List
 from BaseClasses import Item, ItemClassification
-from worlds.civ_6.Enum import CivVICheckType
-from worlds.civ_6.ProgressiveItems import get_flat_progressive_items, get_progressive_items
+from .Enum import CivVICheckType
+from .ProgressiveItems import get_flat_progressive_items, get_progressive_items
 CIV_VI_AP_ITEM_ID_BASE = 5041000
 
 

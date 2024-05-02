@@ -1,9 +1,9 @@
 import typing
 from BaseClasses import CollectionState, Region
 from worlds.AutoWorld import World
-from worlds.civ_6.Enum import EraType
-from worlds.civ_6.Locations import CivVILocation
-from worlds.civ_6.ProgressiveItems import get_flat_progressive_items
+from .Enum import EraType
+from .Locations import CivVILocation
+from .ProgressiveItems import get_flat_progressive_items
 from .Options import CivVIOptions
 import json
 import os

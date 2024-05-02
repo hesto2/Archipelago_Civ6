@@ -2,17 +2,26 @@ import os
 from typing import Dict
 
 import Utils
-from worlds.civ_6.Container import CivVIContainer, generate_new_items
-from worlds.civ_6.Enum import CivVICheckType
-from worlds.civ_6.ProgressiveItems import get_flat_progressive_items
+from .Container import CivVIContainer, generate_new_items
+from .Enum import CivVICheckType
+from .ProgressiveItems import get_flat_progressive_items
 from .Items import CivVIItemData, generate_item_table, CivVIItem
 from .Locations import CivVILocationData, EraType, generate_era_location_table, generate_flat_location_table
 from .Options import CivVIOptions
 from .Regions import create_regions
 from BaseClasses import Item, MultiWorld, Tutorial
-from ..AutoWorld import World, WebWorld
-import re
-import uuid
+from worlds.AutoWorld import World, WebWorld
+from worlds.LauncherComponents import Component, SuffixIdentifier, Type, components, launch_subprocess
+
+def run_client():
+    print("Running Civ6 Client")
+    from Civ6Client import main  # lazy import
+
+
+
+components.append(
+    Component("Civ6 Client", func=run_client, component_type=Type.CLIENT, file_identifier=SuffixIdentifier(".apcivvi"))
+)
 
 
 class CivVIWeb(WebWorld):
@@ -47,7 +56,6 @@ class CivVIWorld(World):
 
     data_version = 1
     required_client_version = (0, 4, 5)
-
 
     def __init__(self, multiworld: "MultiWorld", player: int):
         super().__init__(multiworld, player)
