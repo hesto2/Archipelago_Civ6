@@ -93,13 +93,16 @@ class TunerClient:
         except Exception as e:
             self.logger.debug('Error occurred while receiving data')
             # check if No connection could be made is present in the error message
-            if "No connection could be made" in str(e):
-                raise TunerConnectionException(e)
+            connection_errors = [
+              "The remote computer refused the network connection",
+            ]
+            if any(error in str(e) for error in connection_errors):
+              raise TunerConnectionException(e)
             else:
-                raise TunerErrorException(e)
+              raise TunerErrorException(e)
         finally:
             sock.close()
 
-    async def async_recv(self, sock, timeout=1.0, size=4096):
+    async def async_recv(self, sock, timeout=2.0, size=4096):
         response = await asyncio.wait_for(asyncio.get_event_loop().sock_recv(sock, size), timeout)
         return response

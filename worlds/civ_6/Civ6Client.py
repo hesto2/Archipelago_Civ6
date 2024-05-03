@@ -4,14 +4,14 @@ import traceback
 from typing import Dict, List
 
 from CommonClient import ClientCommandProcessor, CommonContext, get_base_parser, logger, server_loop, gui_enabled
-from NetUtils import ClientStatus, NetworkItem
+from NetUtils import ClientStatus
 import Utils
 from .CivVIInterface import CivVIInterface
 from .Enum import CivVICheckType
 from .Items import CivVIItemData, generate_item_table
 from .Locations import generate_era_location_table
 from .ProgressiveItems import get_progressive_items
-from .TunerClient import TunerErrorException
+from .TunerClient import TunerErrorException, TunerTimeoutException
 
 
 class CivVICommandProcessor(ClientCommandProcessor):
@@ -46,7 +46,7 @@ class CivVIContext(CommonContext):
     item_id_to_civ_item: Dict[int, CivVIItemData] = {}
     item_table: Dict[str, CivVIItemData] = {}
     processing_multiple_items = False
-    disconnected = False
+    disconnected = True
     progressive_items_by_type = get_progressive_items()
     item_name_to_id = {
         item.name: item.code for item in generate_item_table().values()}
@@ -95,24 +95,32 @@ class CivVIContext(CommonContext):
 async def tuner_sync_task(ctx: CivVIContext):
     logger.info("Starting CivVI connector")
     while not ctx.exit_event.is_set():
-        try:
-            if ctx.processing_multiple_items == True:
-                logger.debug("Waiting for items to finish processing")
-                await asyncio.sleep(3)
-            elif await ctx.game_interface.is_in_game():
-                await _handle_game_ready(ctx)
-            else:
-                await asyncio.sleep(3)
-        except Exception as e:
-            if isinstance(e, TunerErrorException):
-                logger.error(str(e))
-            else:
-                logger.error(traceback.format_exc())
-
-            logger.info("Attempting to reconnect to Civ VI...")
-            ctx.disconnected = True
+        if not ctx.slot:
             await asyncio.sleep(3)
             continue
+        else:
+            try:
+                if ctx.processing_multiple_items == True:
+                    logger.debug("Waiting for items to finish processing")
+                    await asyncio.sleep(3)
+                elif await ctx.game_interface.is_in_game():
+                    await _handle_game_ready(ctx)
+                else:
+                    await asyncio.sleep(3)
+            except TunerTimeoutException:
+                logger.info(
+                    "Timeout occurred while receiving data from Civ VI, this usually isn't a problem unless you see it repeatedly")
+                await asyncio.sleep(3)
+            except Exception as e:
+                if isinstance(e, TunerErrorException):
+                    logger.error(str(e))
+                else:
+                    logger.error(traceback.format_exc())
+
+                logger.info("Attempting to connect to Civ VI...")
+                ctx.disconnected = True
+                await asyncio.sleep(3)
+                continue
 
 
 async def handle_checked_location(ctx: CivVIContext):
@@ -184,7 +192,7 @@ async def _handle_game_ready(ctx: CivVIContext):
             return
         if ctx.disconnected == True:
             ctx.disconnected = False
-            logger.info("Reconnected to Civ VI")
+            logger.info("Connected to Civ VI")
         await handle_receive_items(ctx)
         await handle_checked_location(ctx)
         await handle_check_goal_complete(ctx)
@@ -210,7 +218,7 @@ def main(connect=None, password=None, name=None):
         await asyncio.sleep(1)
 
         ctx.tuner_sync_task = asyncio.create_task(
-            tuner_sync_task(ctx), name="DolphinSync")
+            tuner_sync_task(ctx), name="TunerSync")
 
         await ctx.exit_event.wait()
         ctx.server_address = None
@@ -228,10 +236,13 @@ def main(connect=None, password=None, name=None):
     colorama.deinit()
 
 
-if __name__ == "__main__":
+def debug_main():
     parser = get_base_parser()
     parser.add_argument('--name', default=None,
                         help="Slot Name to connect as.")
+    parser.add_argument('--debug', default=None,
+                        help="debug mode, additional logging")
     args = parser.parse_args()
-    logger.setLevel(logging.DEBUG)
+    if args.debug:
+        logger.setLevel(logging.DEBUG)
     main(args.connect, args.password, args.name)
